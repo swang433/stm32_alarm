@@ -63,3 +63,30 @@ port B:
 #define I2C_SR2   (*(volatile uint32_t *) 0x40005418)
 #define I2C_CCR   (*(volatile uint32_t *) 0x4000541C)
 #define I2C_TRISE (*(volatile uint32_t *) 0x40005420)
+
+/*power-based registers*/
+#define PWR_CR    (*(volatile uint32_t *) 0x40007000)
+#define RCC_BDCR  (*(volatile uint32_t *) 0x40021020)
+#define RTC_CRH   (*(volatile uint32_t *) 0x40002800)
+#define RTC_CRL   (*(volatile uint32_t *) 0x40002804)
+#define RTC_CNTH  (*(volatile uint32_t *) 0x40002810)
+#define RTC_CNTL  (*(volatile uint32_t *) 0x40002814)
+#define RTC_ALRH  (*(volatile uint32_t *) 0x40002818)
+#define RTC_ALRL  (*(volatile uint32_t *) 0x4000281C)
+
+/*button-driven interrupt functions*/
+void EXTI0_IRQHandler(void){
+    EXTI_PR |= (1U << 0); 
+}
+
+void EXTI1_IRQHandler(void){
+    EXTI_PR |= (1U << 1); 
+}
+
+void EXTI2_IRQHandler(void){
+    EXTI_PR |= (1U << 2); 
+}
+
+void EXTI3_IRQHandler(void){
+    EXTI_PR |= (1U << 3); 
+}
