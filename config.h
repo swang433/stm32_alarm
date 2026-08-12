@@ -1,5 +1,9 @@
+#ifndef REGS_H
+#define REGS_H
+
+/* never include a .c file to avoid compile time duplication errors*/
+
 #include <stdint.h>
-#include <stdio.h>
 
 /*
 ports used: 
@@ -74,19 +78,18 @@ port B:
 #define RTC_ALRH  (*(volatile uint32_t *) 0x40002818)
 #define RTC_ALRL  (*(volatile uint32_t *) 0x4000281C)
 
-/*button-driven interrupt functions*/
-void EXTI0_IRQHandler(void){
-    EXTI_PR |= (1U << 0); 
-}
+#define DEBOUNCE_MS 20
 
-void EXTI1_IRQHandler(void){
-    EXTI_PR |= (1U << 1); 
-}
+/*FSM modes*/
+#define MODE_CLOCK      0
+#define MODE_SET_TIME   1
+#define MODE_SET_ALARM  2
 
-void EXTI2_IRQHandler(void){
-    EXTI_PR |= (1U << 2); 
-}
+/*button event macros*/
+#define BUTTON_NONE      -1
+#define BUTTON_INCREMENT  0
+#define BUTTON_DECREMENT  1
+#define BUTTON_ALARM_SET  2
+#define BUTTON_SNOOZE     3
 
-void EXTI3_IRQHandler(void){
-    EXTI_PR |= (1U << 3); 
-}
+#endif
