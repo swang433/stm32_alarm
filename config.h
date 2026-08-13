@@ -78,6 +78,10 @@ port B:
 #define RTC_ALRH  (*(volatile uint32_t *) 0x40002818)
 #define RTC_ALRL  (*(volatile uint32_t *) 0x4000281C)
 
+/*RTC flags that help with ticking*/
+#define RTC_CRL_SECF (1U << 0) //second flag
+#define RTC_CRL_ALRF (1U << 1) //alarm flags that trigger interrupts on alarm times
+
 #define DEBOUNCE_MS 20
 
 /*FSM modes*/

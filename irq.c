@@ -3,6 +3,7 @@
 /*global event flags*/
 volatile uint8_t current_mode = MODE_CLOCK;
 volatile int8_t button_event = BUTTON_NONE; //which button pressed
+volatile uint8_t time_changed = 0; 
 
 void delay(int cycles){
     for (volatile int i = 0; i < cycles; i++){
@@ -48,5 +49,11 @@ void EXTI3_IRQHandler(void){
             button_event = BUTTON_SNOOZE; 
         } 
         EXTI_PR |= (1U << 3); 
+    }
+}
+
+void RTC_IRQHandler(void){
+    if (RTC_CRL & RTC_CRL_SECF){
+
     }
 }
