@@ -4,12 +4,6 @@
 extern volatile int8_t button_event; 
 extern volatile uint8_t current_mode;
 
-struct Time{
-    uint8_t hour; 
-    uint8_t min; 
-    uint8_t sec; 
-}; 
-
 void press(int8_t button_event, uint8_t fsm_mode){
     switch (fsm_mode){
         case MODE_CLOCK:

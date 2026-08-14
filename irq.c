@@ -1,9 +1,5 @@
-#include "config.h"
-
-/*global event flags*/
-volatile uint8_t current_mode = MODE_CLOCK;
-volatile int8_t button_event = BUTTON_NONE; //which button pressed
-volatile uint8_t time_changed = 0; 
+#include "config.h" 
+extern struct Curr_Time current_time; 
 
 void delay(int cycles){
     for (volatile int i = 0; i < cycles; i++){
@@ -52,8 +48,44 @@ void EXTI3_IRQHandler(void){
     }
 }
 
-void RTC_IRQHandler(void){
+void RTC_IRQHandler(void){ //time tick interrupt
     if (RTC_CRL & RTC_CRL_SECF){
+        uint32_t CNT_HIGH = (uint32_t)(RTC_CNTH & 0xFFFF) << 16;
+        uint32_t CNT_LOW = (uint32_t)(RTC_CNTL & 0xFFFF);
+        uint32_t cnt = CNT_HIGH | CNT_LOW;  
 
+        uint32_t day_secs = cnt % 86400; 
+        current_time.hour = day_secs / 3600;
+        current_time.minute = (day_secs % 3600) / 60; 
+        current_time.second = day_secs % 60; 
+        
+        time_changed = 1; //interrupt raises the time change flag
+
+        while(!(RTC_CRL & RTC_CRL_RTOFF)){}
+
+        /*
+        enter config mode
+        set clear second flag
+        exit config mode
+        */
+        RTC_CRL |= RTC_CRL_CNF; 
+        RTC_CRL &= ~(RTC_CRL_SECF);
+        RTC_CRL &= ~(RTC_CRL_CNF);  
+        while(!(RTC_CRL & RTC_CRL_RTOFF)){}
+    }
+
+    if (RTC_CRL & RTC_CRL_ALRF){
+        /*
+        raise global alarm flag variable
+        enter config mode
+        set alarm second flag
+        exit config mode
+        */
+        alarm_sound = 1; 
+        while(!(RTC_CRL & RTC_CRL_RTOFF)) {}
+        RTC_CRL |= RTC_CRL_CNF; 
+        RTC_CRL &= ~(RTC_CRL_ALRF); 
+        RTC_CRL &= ~(RTC_CRL_CNF); 
+        while(!(RTC_CRL & RTC_CRL_RTOFF)) {}
     }
 }

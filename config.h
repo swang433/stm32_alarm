@@ -68,19 +68,25 @@ port B:
 #define I2C_CCR   (*(volatile uint32_t *) 0x4000541C)
 #define I2C_TRISE (*(volatile uint32_t *) 0x40005420)
 
-/*power-based registers*/
-#define PWR_CR    (*(volatile uint32_t *) 0x40007000)
-#define RCC_BDCR  (*(volatile uint32_t *) 0x40021020)
-#define RTC_CRH   (*(volatile uint32_t *) 0x40002800)
+/*clock-based registers*/
+#define PWR_CR    (*(volatile uint32_t *) 0x40007000) //sleep, stop, standby
+#define RCC_BDCR  (*(volatile uint32_t *) 0x40021020) //manages the oscillator crystal
+#define RTC_CRH   (*(volatile uint32_t *) 0x40002800) //control regs 
 #define RTC_CRL   (*(volatile uint32_t *) 0x40002804)
-#define RTC_CNTH  (*(volatile uint32_t *) 0x40002810)
-#define RTC_CNTL  (*(volatile uint32_t *) 0x40002814)
-#define RTC_ALRH  (*(volatile uint32_t *) 0x40002818)
+#define RTC_CNTH  (*(volatile uint32_t *) 0x40002810) //counter regs that actually track time
+#define RTC_CNTL  (*(volatile uint32_t *) 0x40002814) 
+#define RTC_ALRH  (*(volatile uint32_t *) 0x40002818) //alarm match conditions
 #define RTC_ALRL  (*(volatile uint32_t *) 0x4000281C)
 
+//note: 
+
 /*RTC flags that help with ticking*/
-#define RTC_CRL_SECF (1U << 0) //second flag
-#define RTC_CRL_ALRF (1U << 1) //alarm flags that trigger interrupts on alarm times
+#define RTC_CRL_SECF  (1U << 0) //second flag
+#define RTC_CRL_ALRF  (1U << 1) //alarm flags that trigger interrupts on alarm times
+#define RTC_CRL_OWF   (1U << 2) //overflow
+#define RTC_CRL_RSF   (1U << 3) //registers synch flag
+#define RTC_CRL_CNF   (1U << 4) //config mode flag
+#define RTC_CRL_RTOFF (1U << 5) // real time clock off flag
 
 #define DEBOUNCE_MS 20
 
@@ -95,5 +101,18 @@ port B:
 #define BUTTON_DECREMENT  1
 #define BUTTON_ALARM_SET  2
 #define BUTTON_SNOOZE     3
+
+/*global event flags*/
+volatile uint8_t current_mode = MODE_CLOCK;
+volatile int8_t button_event = BUTTON_NONE; //which button pressed
+volatile uint8_t time_changed = 0; 
+
+struct Curr_Time{
+    uint8_t hour; 
+    uint8_t minute; 
+    uint8_t second; 
+};
+
+volatile uint8_t alarm_sound = 0; 
 
 #endif
