@@ -47,6 +47,10 @@ port B:
 #define GPIOB_IDR (*(volatile uint32_t *) 0x40010C08)
 #define GPIOB_ODR (*(volatile uint32_t *) 0x40010C0C)
 
+//port C for testing
+#define GPIOC_CRH    (*(volatile uint32_t *)0x40011004)
+#define GPIOC_ODR    (*(volatile uint32_t *)0x4001100C)
+
 /*AFIO - pin muxing for EXTI lines*/
 #define AFIO_EXTICR1 (*(volatile uint32_t *) 0x40010008)
 

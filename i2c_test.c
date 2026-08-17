@@ -1,156 +1,116 @@
 #include <stdint.h>
+#include "config.h"
 
-#define RCC_APB2ENR (*(volatile uint32_t *) 0x40021018)
-#define RCC_APB1ENR (*(volatile uint32_t *) 0x4002101C)
+#define SCL_HI() (GPIOB_ODR |=  (1U << 6))
+#define SCL_LO() (GPIOB_ODR &= ~(1U << 6))
+#define SDA_HI() (GPIOB_ODR |=  (1U << 7))
+#define SDA_LO() (GPIOB_ODR &= ~(1U << 7))
+#define SDA_IN() (GPIOB_IDR &   (1U << 7))
 
-#define GPIOB_CRL   (*(volatile uint32_t *) 0x40010C00)
+#define OLED_ADDR 0x3C
 
-#define I2C1_CR1    (*(volatile uint32_t *) 0x40005400)
-#define I2C1_CR2    (*(volatile uint32_t *) 0x40005404)
-#define I2C1_DR     (*(volatile uint32_t *) 0x40005410)
-#define I2C1_SR1    (*(volatile uint32_t *) 0x40005414)
-#define I2C1_SR2    (*(volatile uint32_t *) 0x40005418)
-#define I2C1_CCR    (*(volatile uint32_t *) 0x4000541C)
-#define I2C1_TRISE  (*(volatile uint32_t *) 0x40005420)
+static void delay(volatile int n) { while (n--); }
+static void dly(void) { delay(50); }
 
-#define SSD1306_ADDR 0x3C
-
-static void i2c_init(void) {
-    /* enable GPIOB and I2C1 clocks */
+static void bb_init(void) {
     RCC_APB2ENR |= (1U << 3);
-    RCC_APB1ENR |= (1U << 21);
-
-    /* PB6 SCL, PB7 SDA: AF open-drain, 50MHz (CNF=10, MODE=11 -> 0xB) */
     GPIOB_CRL &= ~(0xFF << 24);
-    GPIOB_CRL |=  (0xBB << 24);
-
-    /* reset I2C1 */
-    I2C1_CR1 |= (1U << 15);
-    I2C1_CR1 &= ~(1U << 15);
-
-    /* APB1 clock = 8MHz */
-    I2C1_CR2 = 8;
-
-    /* standard mode 100kHz: CCR = 8MHz / (2 * 100kHz) = 40 */
-    I2C1_CCR = 40;
-
-    /* TRISE = (8MHz / 1MHz) + 1 = 9 */
-    I2C1_TRISE = 9;
-
-    /* enable peripheral */
-    I2C1_CR1 |= (1U << 0);
+    GPIOB_CRL |=  (0x77 << 24);   /* PB6=SCL PB7=SDA: GP open-drain 50MHz */
+    SCL_HI(); SDA_HI();
+    delay(10000);
 }
 
-static void i2c_start(void) {
-    /* wait until bus free */
-    while (I2C1_SR2 & (1U << 1));
-    /* generate START */
-    I2C1_CR1 |= (1U << 8);
-    /* wait for SB flag */
-    while (!(I2C1_SR1 & (1U << 0)));
+static void bb_start(void) {
+    SDA_HI(); dly(); SCL_HI(); dly();
+    SDA_LO(); dly(); SCL_LO(); dly();
 }
 
-static void i2c_send_addr(uint8_t addr) {
-    /* write address (7-bit shifted left, write = bit0 clear) */
-    I2C1_DR = (addr << 1);
-    /* wait for ADDR flag then clear by reading SR1 and SR2 */
-    while (!(I2C1_SR1 & (1U << 1)));
-    (void) I2C1_SR1;
-    (void) I2C1_SR2;
+static void bb_stop(void) {
+    SDA_LO(); dly(); SCL_HI(); dly(); SDA_HI(); dly();
 }
 
-static void i2c_write(uint8_t data) {
-    /* wait for TXE */
-    while (!(I2C1_SR1 & (1U << 7)));
-    I2C1_DR = data;
+static int bb_write(uint8_t byte) {
+    for (int i = 7; i >= 0; i--) {
+        if (byte & (1U << i)) SDA_HI(); else SDA_LO();
+        dly(); SCL_HI(); dly(); SCL_LO(); dly();
+    }
+    SDA_HI(); dly();
+    SCL_HI(); dly();
+    int nack = SDA_IN();
+    SCL_LO(); dly();
+    return nack ? 0 : 1;
 }
 
-static void i2c_stop(void) {
-    /* wait for BTF */
-    while (!(I2C1_SR1 & (1U << 2)));
-    I2C1_CR1 |= (1U << 9);
-}
-
-static void oled_send_cmd(uint8_t cmd) {
-    i2c_start();
-    i2c_send_addr(SSD1306_ADDR);
-    i2c_write(0x00); /* Co=0, D/C=0 -> command byte follows */
-    i2c_write(cmd);
-    i2c_stop();
+static int bb_probe(uint8_t addr) {
+    bb_start();
+    int ack = bb_write(addr << 1);
+    bb_stop();
+    return ack;
 }
 
 static void oled_init(void) {
-    oled_send_cmd(0xAE); /* display off */
-    oled_send_cmd(0xD5); /* set display clock divide */
-    oled_send_cmd(0x80);
-    oled_send_cmd(0xA8); /* set multiplex ratio */
-    oled_send_cmd(0x3F); /* 64 rows */
-    oled_send_cmd(0xD3); /* set display offset */
-    oled_send_cmd(0x00);
-    oled_send_cmd(0x40); /* set start line = 0 */
-    oled_send_cmd(0x8D); /* charge pump */
-    oled_send_cmd(0x14); /* enable */
-    oled_send_cmd(0x20); /* memory addressing mode */
-    oled_send_cmd(0x00); /* horizontal */
-    oled_send_cmd(0xA1); /* segment remap */
-    oled_send_cmd(0xC8); /* COM scan direction */
-    oled_send_cmd(0xDA); /* COM pins */
-    oled_send_cmd(0x12);
-    oled_send_cmd(0x81); /* contrast */
-    oled_send_cmd(0xCF);
-    oled_send_cmd(0xD9); /* precharge */
-    oled_send_cmd(0xF1);
-    oled_send_cmd(0xDB); /* VCOMH deselect */
-    oled_send_cmd(0x40);
-    oled_send_cmd(0xA4); /* display from RAM */
-    oled_send_cmd(0xA6); /* normal (not inverted) */
-    oled_send_cmd(0xAF); /* display on */
+    oled_cmd(0xAE);            /* display off */
+    oled_cmd(0xD5); oled_cmd(0x80);  /* clock divide */
+    oled_cmd(0xA8); oled_cmd(0x3F);  /* multiplex ratio: 64 rows */
+    oled_cmd(0xD3); oled_cmd(0x00);  /* display offset: 0 */
+    oled_cmd(0x40);            /* start line: 0 */
+    oled_cmd(0xAD); oled_cmd(0x8B);  /* charge pump: internal VCC (SSH1106) */
+    oled_cmd(0xA1);            /* segment remap */
+    oled_cmd(0xC8);            /* COM scan direction: reversed */
+    oled_cmd(0xDA); oled_cmd(0x12);  /* COM pins */
+    oled_cmd(0x81); oled_cmd(0xCF);  /* contrast */
+    oled_cmd(0xD9); oled_cmd(0xF1);  /* precharge period */
+    oled_cmd(0xDB); oled_cmd(0x40);  /* VCOMH deselect */
+    oled_cmd(0xA4);            /* display from RAM */
+    oled_cmd(0xA6);            /* normal (not inverted) */
+    oled_cmd(0xAF);            /* display on */
 }
 
-static void oled_fill(uint8_t pattern) {
-    /* set column and page address to cover full 128x64 display */
-    oled_send_cmd(0x21); /* column address */
-    oled_send_cmd(0x00);
-    oled_send_cmd(0x7F);
-    oled_send_cmd(0x22); /* page address */
-    oled_send_cmd(0x00);
-    oled_send_cmd(0x07);
-
-    /* stream all 1024 bytes as data */
-    i2c_start();
-    i2c_send_addr(SSD1306_ADDR);
-    i2c_write(0x40); /* Co=0, D/C=1 -> data bytes follow */
-    for (int i = 0; i < 1024; i++) {
-        i2c_write(pattern);
-    }
-    i2c_stop();
+static void oled_cmd(uint8_t cmd) {
+    bb_start();
+    bb_write(OLED_ADDR << 1);  /* slave address + write bit */
+    bb_write(0x00);            /* control byte: Co=0 D/C#=0 = command */
+    bb_write(cmd);
+    bb_stop();
 }
 
-void delay(int cycles){
-    for (uint8_t i = 0; i < cycles; i++){
-        __asm__("nop"); 
+static const uint8_t colors[8] = {
+    0xFF, 0xFF, 0xF0, 0xCC, 0x33, 0x0F, 0xAA, 0x55
+};
+
+static void stripes(void) {
+    for (uint8_t page = 0; page < 8; page++) {
+        oled_cmd(0xB0 + page);  /* set page */
+        oled_cmd(0x02);         /* set low column (2-col hardware offset) */
+        oled_cmd(0x10);         /* set high column */
+
+        bb_start();
+        bb_write(OLED_ADDR << 1);
+        bb_write(0x40);         /* control byte: Co=0 D/C#=1 = data */
+        for (int i = 0; i < 128; i++)
+            bb_write(colors[page]);
+        bb_stop();
     }
 }
-
-#define GPIOC_CRH (*(volatile uint32_t *) 0x40011004)
-#define GPIOC_ODR (*(volatile uint32_t *) 0x4001100C)
 
 int main(void) {
-    RCC_APB2ENR |= (1U << 4);
+    RCC_APB2ENR |= (1U << 4);   /* GPIOC clock */
     GPIOC_CRH &= ~(0xF << 20);
-    GPIOC_CRH |=  (0x2 << 20);
-    GPIOC_ODR |= (1U << 13); /* LED off */
+    GPIOC_CRH |=  (0x2 << 20);  /* PC13 output 2MHz push-pull */
+    GPIOC_ODR |=  (1U << 13);   /* LED off */
 
-    i2c_init();
-    GPIOC_ODR &= ~(1U << 13); /* LED on = got past i2c_init */
-    delay(800000);
-    GPIOC_ODR |= (1U << 13);
+    bb_init();
+    delay(800000);               /* let display VCC stabilize */
 
-    oled_init();              /* if it hangs here LED never blinks again */
-    GPIOC_ODR &= ~(1U << 13);
-    delay(800000);
-    GPIOC_ODR |= (1U << 13);
+    if (!bb_probe(OLED_ADDR)) {
+        while (1) {              /* slow blink = display not found */
+            GPIOC_ODR ^= (1U << 13);
+            delay(400000);
+        }
+    }
 
-    oled_fill(0xFF);
+    oled_init();
+    stripes();
+
     while (1);
 }

@@ -5,7 +5,7 @@ Bare-metal alarm clock firmware for the STM32F1xx, written in C with direct regi
 ## Features
 
 - Real-time clock using the STM32 internal RTC peripheral
-- SSD1306 OLED display over I2C
+- SSH1106 OLED display over I2C
 - Passive piezo buzzer driven by PWM
 - Four-button input with hardware debouncing via EXTI interrupts
 - Finite state machine with three operating modes
@@ -14,7 +14,7 @@ Bare-metal alarm clock firmware for the STM32F1xx, written in C with direct regi
 
 | Peripheral | Interface | Pin(s) |
 |---|---|---|
-| SSD1306 OLED Display | I2C | PB6 (SCL), PB7 (SDA) |
+| SSH1106 OLED Display | I2C | PB6 (SCL), PB7 (SDA) |
 | Passive Piezo Buzzer | PWM | PA6 |
 | Tactile Buttons (×4) | Digital Input (pull-up) | PA0–PA3 |
 
@@ -48,7 +48,7 @@ alarm/
 ├── config.h       # Memory-mapped register definitions and macro constants
 ├── irq.c          # EXTI interrupt handlers with software debounce
 ├── main_fsm.c     # FSM logic and main entry point
-├── oled.c         # SSD1306 display driver (I2C)
+├── oled.c         # SSH1106 display driver (I2C)
 ├── startup.s      # (planned) Cortex-M3 startup and vector table in assembly
 └── linker.ld      # (planned) Linker script for flash/RAM layout
 ```
