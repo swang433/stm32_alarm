@@ -72,6 +72,9 @@ port B:
 #define I2C_CCR   (*(volatile uint32_t *) 0x4000541C)
 #define I2C_TRISE (*(volatile uint32_t *) 0x40005420)
 
+#define OLED_ADDR   0x3C
+#define CMD_CONTROL 0x00
+
 /*clock-based registers*/
 #define PWR_CR    (*(volatile uint32_t *) 0x40007000) //sleep, stop, standby
 #define RCC_BDCR  (*(volatile uint32_t *) 0x40021020) //manages the oscillator crystal

@@ -8,13 +8,8 @@
 #define SDA_LO() (GPIOB_ODR &= ~(1U << 7)) 
 #define SDA_IN() (GPIOB_IDR &   (1U << 7))
 
-#define OLED_ADDR   0x3C
-#define CMD_CONTROL 0x00
-
 static void delay(volatile unsigned int cycles){
-    for (int i = 0; i < cycles; i++){
-        __asm__("nop"); 
-    }
+    for (int i = 0; i < cycles; i++)__asm__("nop"); 
 }
 
 void bb_init(void){
@@ -29,6 +24,7 @@ static void dly(){delay(50);}
 
 //start condition
 static void start(void){
+    /* pulling SDA low when SCL is high  */
     SDA_HI(); dly(); 
     SCL_HI(); dly(); 
     SDA_LO(); dly(); 
@@ -37,12 +33,22 @@ static void start(void){
 
 //stop condition
 static void stop(void){
+    /* pulling SDA high when SCL is high */
     SDA_LO(); dly();
     SCL_HI(); dly(); 
     SDA_HI(); dly(); 
 }
 
 static int write(uint8_t byte){
+    /*
+    iterate through every bit of the byte: 
+        manually toggle data wire 1 = high, low = 0
+        tick clock wire once to signal the end of the bit
+    reset data wire high (default)
+    tick clock once, during the clock cycle
+    check if the SDA wire is low signaling a successful write
+    return 1 if write is successful
+    */
     for (int i = 7; i >= 0; i--){
         if (byte & (1U << i)){
             SDA_HI(); 
@@ -50,7 +56,7 @@ static int write(uint8_t byte){
         else{
             SDA_LO(); 
         }
-        dly(); SCL_HI(); 
+        dly(); SCL_HI();
         dly(); SCL_LO(); 
         dly(); 
     }
@@ -58,10 +64,17 @@ static int write(uint8_t byte){
     SCL_HI(); dly(); 
     int nack = SDA_IN(); 
     SCL_LO(); dly(); 
-    return nack ? 0: 1; //if nack return write fail(0)
+    return nack ? 0: 1; 
 }
 
 static void oled_cmd(uint8_t cmd){
+    /*
+    start condition
+    write 7-bit slave address
+    command control byte
+    actual command
+    stop condition
+    */
     start(); 
     write(OLED_ADDR << 1);
     write(CMD_CONTROL); 
@@ -70,6 +83,7 @@ static void oled_cmd(uint8_t cmd){
 }
 
 static void oled_init(void) {
+    /* OLED init sequence */
     oled_cmd(0xAE);            /* display off */
     oled_cmd(0xD5); oled_cmd(0x80);  /* clock divide */
     oled_cmd(0xA8); oled_cmd(0x3F);  /* multiplex ratio: 64 rows */
@@ -87,17 +101,17 @@ static void oled_init(void) {
     oled_cmd(0xAF);            /* display on */
 }
 
-static const uint8_t heart_top[16] = {
-    0x00, 0x1C, 0x3E, 0x7E, 0xFE, 0xFE, 0x7E, 0x3E,
-    0x3E, 0x7E, 0xFE, 0xFE, 0x7E, 0x3E, 0x1C, 0x00
-};
-
-static const uint8_t heart_bot[16] = {
-    0x00, 0x1C, 0x3E, 0x7E, 0x7C, 0x38, 0x10, 0x00,
-    0x00, 0x10, 0x38, 0x7C, 0x7E, 0x3E, 0x1C, 0x00
-};
-
 static void oled_data_buf(uint8_t page, uint8_t col, const uint8_t *buf, uint8_t len) {
+    /*
+    0xB0 => set page command
+    set low bits for the column
+    set high bits for the column
+    start condition 
+    select slave address
+    control byte for the pixel data
+    write each pixel column byte one at a time
+    stop condition
+    */
     oled_cmd(0xB0 | page);
     oled_cmd(0x00 | ((col + 2) & 0x0F));
     oled_cmd(0x10 | ((col + 2) >> 4));
@@ -123,16 +137,45 @@ static void oled_clear(void) {
     }
 }
 
-static void draw_heart(uint8_t page, uint8_t col) {
-    oled_data_buf(page + 1, col, heart_top, 16);
-    oled_data_buf(page,     col, heart_bot, 16);   
+static const uint8_t font5x7[10][5] = {
+    {0x3E, 0x51, 0x49, 0x45, 0x3E}, /* 0 */
+    {0x00, 0x42, 0x7F, 0x40, 0x00}, /* 1 */
+    {0x42, 0x61, 0x51, 0x49, 0x46}, /* 2 */
+    {0x21, 0x41, 0x45, 0x4B, 0x31}, /* 3 */
+    {0x18, 0x14, 0x12, 0x7F, 0x10}, /* 4 */
+    {0x27, 0x45, 0x45, 0x45, 0x39}, /* 5 */
+    {0x3C, 0x4A, 0x49, 0x49, 0x30}, /* 6 */
+    {0x01, 0x71, 0x09, 0x05, 0x03}, /* 7 */
+    {0x36, 0x49, 0x49, 0x49, 0x36}, /* 8 */
+    {0x06, 0x49, 0x49, 0x29, 0x1E}, /* 9 */
+};
+
+static void digit(uint8_t page, uint8_t col, uint8_t digit){
+    oled_data_buf(page, col, font5x7[digit], 5); 
+}
+
+static void display_digit(uint8_t num){
+    if (num < 10){
+        digit(3, 60, num); 
+    }
+    else{
+        digit(3, 56, num / 10); 
+        digit(3, 63, num % 10); 
+    }
 }
 
 int main(void){
     bb_init(); 
-    delay(800000); 
+    delay(100000); 
     oled_init(); 
-    draw_heart(3, 56); 
-    
-    while(1); 
+    oled_clear(); 
+    int i = 0;   
+    while(1){
+        oled_clear(); 
+        if (i > 20){
+            i = 0; 
+        }
+        display_digit(i); 
+        i++; 
+    } 
 }

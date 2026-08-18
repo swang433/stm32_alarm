@@ -76,6 +76,14 @@ stm32flash -w firmware.bin -v -g 0x0 [UART_DEVICE_NAME]
 
 **5. Boot normally** — set Boot0 pin low, then reset the board.
 
+## Challenges Faced
+
+### GD32F103 I2C Peripheral Incompatibility
+The target board uses a GD32F103C8T6, a Chinese STM32F103-compatible clone. While the GD32 is pin and register-compatible with the STM32 for most peripherals, the hardware I2C peripheral behaves differently — the GD32's I2C state machine has timing differences that cause it to silently fail when following the standard STM32F103 register-level initialization sequence. The OLED would not be detected at address `0x3C` and no ACK was received. The fix was to abandon the hardware I2C peripheral entirely and implement bit-bang I2C on PB6/PB7 using direct GPIO toggling, which bypasses the peripheral and works identically on both chips.
+
+### Display Refresh Speed Bottleneck
+The bit-bang I2C implementation runs at approximately 50kHz due to the 50-NOP `dly()` calls inserted between every SCL/SDA transition. Clearing the full display requires 1024 I2C bytes (128 columns × 8 pages), each requiring 9 clock pulses with multiple delay calls. This makes a full `oled_clear()` + redraw take significant time, limiting how fast the display can be updated. Options to address this: switch to the hardware I2C peripheral at 400kHz (blocked by the GD32 compatibility issue above), reduce NOP count in `dly()` (risks missed ACKs), or avoid full clears by only redrawing changed regions.
+
 ## Implementation Notes
 
 - All peripherals are configured by direct memory-mapped register writes defined in `config.h`.
