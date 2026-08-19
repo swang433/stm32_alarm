@@ -10,7 +10,7 @@ ports used:
 - A: base = 0x40010800
 - B: base = 0x40010C00
 
-SSD 1306 OLED Display: 
+SH1106 OLED Display:
 - I2C
 - PB6 (SCL out)
 - PB7 (SDA in and out)
