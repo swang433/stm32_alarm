@@ -1,4 +1,4 @@
-#include "config_stm32f.h"
+#include "config_c071.h"
 #include <stdint.h>
 
 static void i2c_init(void){

@@ -1,4 +1,4 @@
-#include "config.h" 
+#include "config_c071.h" 
 extern struct Curr_Time current_time; 
 
 void delay(int cycles){

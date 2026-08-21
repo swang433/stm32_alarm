@@ -1,6 +1,8 @@
 # STM32 Alarm Clock
 
-Bare-metal alarm clock firmware for the STM32F1xx, written in C with direct register access — no HAL or CMSIS abstraction layer.
+Bare-metal alarm clock firmware written in C with direct register access — no HAL or CMSIS abstraction layer.
+
+> **Prototyping board:** Nucleo-C071RB (STM32C071RB, Cortex-M0+). Config registers are in `config_c071.h`. The original STM32F1xx register definitions are preserved in `config_stm32f.h`.
 
 ## Features
 
@@ -18,7 +20,7 @@ Bare-metal alarm clock firmware for the STM32F1xx, written in C with direct regi
 | Passive Piezo Buzzer | PWM | PA6 |
 | Tactile Buttons (×4) | Digital Input (pull-up) | PA0–PA3 |
 
-**Target MCU:** STM32F103 (or compatible STM32F1xx)
+**Target MCU:** STM32C071RB on Nucleo-C071RB (previously STM32F103)
 
 ## Button Map
 
@@ -59,7 +61,7 @@ Requires `arm-none-eabi-gcc`, `arm-none-eabi-objcopy`, and `stm32flash`. The sta
 
 **1. Compile and link**
 ```bash
-arm-none-eabi-gcc -mcpu=cortex-m3 -mthumb -nostdlib -T linker.ld -o firmware.elf startup.s main.c
+arm-none-eabi-gcc -mcpu=cortex-m0plus -mthumb -nostdlib -T linker.ld -o firmware.elf startup.s main.c
 ```
 
 **2. Convert to binary**
@@ -67,14 +69,10 @@ arm-none-eabi-gcc -mcpu=cortex-m3 -mthumb -nostdlib -T linker.ld -o firmware.elf
 arm-none-eabi-objcopy -O binary firmware.elf firmware.bin
 ```
 
-**3. Enter bootloader** — set Boot0 pin high, then reset the board.
-
-**4. Flash over UART from linux**
+**3. Flash via ST-Link** — the Nucleo-C071RB has an onboard ST-Link; no bootloader pin toggling needed.
 ```bash
-stm32flash -w firmware.bin -v -g 0x0 [UART_DEVICE_NAME]
+st-flash write firmware.bin 0x08000000
 ```
-
-**5. Boot normally** — set Boot0 pin low, then reset the board.
 
 ## Challenges Faced
 
