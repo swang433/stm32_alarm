@@ -18,7 +18,7 @@ Bare-metal alarm clock firmware written in C with direct register access — no 
 |---|---|---|
 | SSH1106 OLED Display | I2C | PB6 (SCL), PB7 (SDA) |
 | Passive Piezo Buzzer | PWM | PA6 |
-| Tactile Buttons (×4) | Digital Input (pull-up) | PA0–PA3 |
+| Tactile Buttons (×4) | Digital Input (pull-up) | PA0, PA1, PA3, PA4 |
 
 **Target MCU:** STM32C071RB on Nucleo-C071RB (previously STM32F103)
 
@@ -28,8 +28,8 @@ Bare-metal alarm clock firmware written in C with direct register access — no 
 |---|---|---|
 | PA0 | Increment | Increases the selected time field |
 | PA1 | Decrement | Decreases the selected time field |
-| PA2 | Alarm Set | Enters/confirms alarm setting mode |
-| PA3 | Snooze | Snoozes an active alarm |
+| PA3 | Alarm Set | Enters/confirms alarm setting mode |
+| PA4 | Snooze | Snoozes an active alarm |
 
 ## FSM Modes
 
@@ -47,11 +47,12 @@ MODE_CLOCK (0) ──► MODE_SET_TIME (1)
 
 ```
 alarm/
-├── config.h       # Memory-mapped register definitions and macro constants
+├── config_c071.h  # Register definitions for STM32C071RB (active)
+├── config_stm32f.h # Register definitions for STM32F1xx (reference)
 ├── irq.c          # EXTI interrupt handlers with software debounce
 ├── main_fsm.c     # FSM logic and main entry point
 ├── oled.c         # SSH1106 display driver (I2C)
-├── startup.s      # (planned) Cortex-M3 startup and vector table in assembly
+├── startup.s      # (planned) Cortex-M0+ startup and vector table in assembly
 └── linker.ld      # (planned) Linker script for flash/RAM layout
 ```
 
