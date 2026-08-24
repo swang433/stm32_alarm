@@ -1,5 +1,5 @@
+#include "config_c071.h"
 #include <stdint.h>
-#include "config.h"
 
 extern volatile int8_t button_event; 
 extern volatile uint8_t current_mode;
