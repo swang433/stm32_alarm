@@ -1,8 +1,11 @@
 #include "config_c071.h"
 #include <stdint.h>
 
-extern volatile int8_t button_event; 
-extern volatile uint8_t current_mode;
+/*global event flags*/
+volatile uint8_t current_mode = MODE_CLOCK;
+volatile int8_t button_event = BUTTON_NONE;
+volatile uint8_t time_changed = 0;
+volatile uint8_t alarm_sound = 0;
 
 void press(int8_t button_event, uint8_t fsm_mode){
     switch (fsm_mode){
@@ -18,8 +21,4 @@ void press(int8_t button_event, uint8_t fsm_mode){
             /* logic */
             break; 
     }
-}
-
-int main(void){
-    return 0; 
 }
