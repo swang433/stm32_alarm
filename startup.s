@@ -5,8 +5,8 @@
     .section .isr_vector, "a"
     .word   _estack
     .word   Reset_Handler
-    .word   0           /* NMI */
-    .word   0           /* HardFault */
+    .word   Fault_Handler /* NMI */
+    .word   Fault_Handler /* HardFault */
     .word   0           /* Reserved */
     .word   0           /* Reserved */
     .word   0           /* Reserved */
@@ -22,9 +22,9 @@
     .word   0           /* RTC */
     .word   0           /* FLASH */
     .word   0           /* RCC_CRS */
-    .word   0           /* EXTI0_1 */
-    .word   0           /* EXTI2_3 */
-    .word   0           /* EXTI4_15 */
+    .word   EXTI0_1_IRQHandler
+    .word   EXTI2_3_IRQHandler
+    .word   EXTI4_15_IRQHandler
     .word   0           /* USB_DRD_FS */
     .word   0           /* DMA1_Ch1 */
     .word   0           /* DMA1_Ch2_3 */
@@ -77,4 +77,9 @@ clear_bss:
 
 start_main:
     bl main
+    b .
+
+    .global Fault_Handler
+    .type   Fault_Handler, %function
+Fault_Handler:
     b .
