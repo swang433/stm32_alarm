@@ -17,19 +17,19 @@ Bare-metal alarm clock firmware written in C with direct register access — no 
 | Peripheral | Interface | Pin(s) |
 |---|---|---|
 | SSH1106 OLED Display | I2C | PB6 (SCL), PB7 (SDA) |
-| Passive Piezo Buzzer | PWM | PA6 |
-| Tactile Buttons (×4) | Digital Input (pull-up) | PA0, PA1, PA3, PA4 |
+| Passive Piezo Buzzer | PWM | PA7 (D11) |
+| Tactile Buttons (×4) | Digital Input (pull-up) | PA0, PA1, PA4, PB3 |
 
 **Target MCU:** STM32C071RB on Nucleo-C071RB (previously STM32F103)
 
 ## Button Map
 
-| Pin | Button | Action |
-|---|---|---|
-| PA0 | Increment | Increases the selected time field |
-| PA1 | Decrement | Decreases the selected time field |
-| PA3 | Alarm Set | Enters/confirms alarm setting mode |
-| PA4 | Snooze | Snoozes an active alarm |
+| MCU Pin | Arduino Header | Button | Action |
+|---|---|---|---|
+| PA0 | A0 | Increment | Increases the selected time field |
+| PA1 | A1 | Decrement | Decreases the selected time field |
+| PB3 | D9 | Alarm Set | Enters/confirms alarm setting mode |
+| PA4 | A2 | Snooze | Snoozes an active alarm |
 
 ## FSM Modes
 
@@ -48,32 +48,39 @@ MODE_CLOCK (0) ──► MODE_SET_TIME (1)
 ```
 alarm/
 ├── config_c071.h  # Register definitions for STM32C071RB (active)
-├── config_stm32f.h # Register definitions for STM32F1xx (reference)
-├── irq.c          # EXTI interrupt handlers with software debounce
+├── irq.c          # EXTI interrupt handlers with software debounce (real firmware ISRs)
 ├── main_fsm.c     # FSM logic and main entry point
-├── oled.c         # SSH1106 display driver (I2C)
-├── startup.s      # (planned) Cortex-M0+ startup and vector table in assembly
-└── linker.ld      # (planned) Linker script for flash/RAM layout
+├── oled.c         # SSH1106 display driver (I2C); currently also a standalone I2C test with its own main
+├── buzz.c         # Buzzer driver: TIM3_CH2 PWM on PA7 (buzzer_init, buzzer_sound, buzzer_stop)
+├── but.c          # Standalone button test: each button toggles LD1 (PA5) and LD2 (PC9)
+├── startup.s      # Cortex-M0+ startup and vector table in assembly
+├── linker.ld      # Linker script for flash/RAM layout
+└── build.sh       # Builds firmware.elf and firmware.bin from the given source files
 ```
 
 ## Building & Flashing
 
-Requires `arm-none-eabi-gcc`, `arm-none-eabi-objcopy`, and `stm32flash`. The startup assembly file and linker script are planned (see file tree below).
+Requires `arm-none-eabi-gcc`, `arm-none-eabi-objcopy`, and STM32CubeProgrammer (for flashing). The startup file (`startup.s`) and linker script (`linker.ld`) are included.
 
-**1. Compile and link**
+`but.c` is a standalone test of the button wiring and logic, and it defines the same interrupt handlers as `irq.c`, so build one or the other, never both. The real firmware uses the handlers in `irq.c`.
+
+**1. Build** — compiles, links, and converts to binary in one step. Pass the source files to build (`startup.s` and `linker.ld` are added automatically):
 ```bash
-arm-none-eabi-gcc -mcpu=cortex-m0plus -mthumb -nostdlib -T linker.ld -o firmware.elf startup.s main.c
+./build.sh <source.c> [more.c ...]
 ```
 
-**2. Convert to binary**
+This produces `firmware.elf` and `firmware.bin`.
+
+**2. Flash via STM32CubeProgrammer (ST-Link)** — the Nucleo-C071RB has an onboard ST-Link; no bootloader pin toggling needed.
+
+*GUI:* open STM32CubeProgrammer, select **ST-LINK** as the interface, click **Connect**, open `firmware.bin` (or `firmware.elf`) in the **Erasing & Programming** tab, set the start address to `0x08000000` for a `.bin`, and click **Start Programming**.
+
+*CLI:*
 ```bash
-arm-none-eabi-objcopy -O binary firmware.elf firmware.bin
+STM32_Programmer_CLI -c port=SWD -w firmware.bin 0x08000000 -v -rst
 ```
 
-**3. Flash via ST-Link** — the Nucleo-C071RB has an onboard ST-Link; no bootloader pin toggling needed.
-```bash
-st-flash write firmware.bin 0x08000000
-```
+`-v` verifies after writing and `-rst` resets the board so the new firmware starts running.
 
 ## Challenges Faced
 

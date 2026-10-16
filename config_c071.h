@@ -5,14 +5,16 @@
 
 /*
 ports used: 
-PA: 
+PA:
   - buttons (GPIOA)
-  - pins: A0, A1, A3, A4
+  - pins: PA0 (A0), PA1 (A1), PA4 (A2)
   - passive piezo buzzer (PWM)
-  - pins: A6
-PB: 
+  - pins: PA7 (D11)
+PB:
+  - button (GPIOB)
+  - pin: PB3
   - SSH1106 OLED (I2C peripheral)
-  - pins: B6, B7 (CN10 pins 35 and 37)
+  - pins: PB6, PB7 (CN10 pins 35 and 37)
 */
 
 //reset and clock enable registers
@@ -53,17 +55,18 @@ GPIOB:
 #define GPIOC_ODR     (*(volatile uint32_t *)0x50000814)
 
 /*
-EXTI: external interrupt registers for PA0, PA1, PA3, PA4
+EXTI: external interrupt registers for PA0, PA1, PA4, PB3
   - RTSR1:      rising edge trigger selection (lines 0,1,3,4)
   - FTSR1:      falling edge trigger selection (lines 0,1,3,4)
   - RPR1:       rising edge pending — write 1 to clear in ISR
   - FPR1:       falling edge pending — write 1 to clear in ISR
-  - EXTICR[0]:  maps EXTI lines 0-3 to a GPIO port (0x0 = GPIOA)
+  - EXTICR[0]:  maps EXTI lines 0-3 to a GPIO port (0x0 = GPIOA, 0x1 = GPIOB);
+                one byte per line, so line 3 (PB3) is bits [26:24]
   - EXTICR[1]:  maps EXTI lines 4-7 to a GPIO port (0x0 = GPIOA)
   - IMR1:       interrupt mask — unmask lines 0,1,3,4 to enable
   IRQ handlers needed:
     EXTI0_1_IRQn  (IRQ 5)  -> PA0, PA1
-    EXTI2_3_IRQn  (IRQ 6)  -> PA3
+    EXTI2_3_IRQn  (IRQ 6)  -> PB3
     EXTI4_15_IRQn (IRQ 7)  -> PA4
 */
 #define EXTI_RTSR1     (*(volatile uint32_t *)0x40021800)
@@ -75,20 +78,22 @@ EXTI: external interrupt registers for PA0, PA1, PA3, PA4
 #define EXTI_IMR1      (*(volatile uint32_t *)0x40021880)
 
 /*
-TIM3: PWM output on PA6 (AF1 = TIM3_CH1)
-  - CR1:   enable counter (bit0)
-  - CCMR1: set CH1 to PWM mode 1 (bits 6:4 = 110)
-  - CCER:  enable CH1 output (bit0)
+TIM3: PWM output on PA7 / D11 (TIM3_CH2; confirm the AF number in the datasheet)
+  - CR1:   control register, enable counter (bit0)
+  - CCMR1: capture/compare mode register, set CH2 to PWM mode 1 (bits 14:12 = 110)
+  - CCER:  capture/compare enable register, enable CH2 output (bit4)
   - PSC:   prescaler — divides system clock
   - ARR:   auto-reload — sets PWM period
-  - CCR1:  compare value — sets duty cycle
+  - EGR:   event generation
+  - CCR2:  capture/compare register, compare value — sets duty cycle
 */
 #define TIM3_CR1    (*(volatile uint32_t *)0x40000400)
 #define TIM3_CCMR1  (*(volatile uint32_t *)0x40000418)
 #define TIM3_CCER   (*(volatile uint32_t *)0x40000420)
 #define TIM3_PSC    (*(volatile uint32_t *)0x40000428)
 #define TIM3_ARR    (*(volatile uint32_t *)0x4000042C)
-#define TIM3_CCR1   (*(volatile uint32_t *)0x40000434)
+#define TIM3_EGR    (*(volatile uint32_t* )0x40000414)
+#define TIM3_CCR2   (*(volatile uint32_t *)0x40000438)
 
 /*
 I2C1: SH1106 OLED on PB6 (SCL, AF6) and PB7 (SDA, AF6)

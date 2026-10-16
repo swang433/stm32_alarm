@@ -22,3 +22,7 @@ void press(int8_t button_event, uint8_t fsm_mode){
             break; 
     }
 }
+
+int main(){
+    return 0; 
+}
