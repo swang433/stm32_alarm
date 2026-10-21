@@ -16,9 +16,9 @@ Bare-metal alarm clock firmware written in C with direct register access — no 
 
 | Peripheral | Interface | Pin(s) |
 |---|---|---|
-| SSH1106 OLED Display | I2C | PB6 (SCL, D1), PB7 (SDA, D0) |
+| SSH1106 OLED Display | I2C | PB6 SCL (D1), PB7 SDA (D0) |
 | Passive Piezo Buzzer | PWM | PA7 (D11) |
-| Tactile Buttons (×4) | Digital Input (pull-up) | PA0, PA1, PA4, PB3 |
+| Tactile Buttons (×4) | Digital Input (pull-up) | PA0 (A0), PA1 (A1), PA4 (A2), PB3 (D9) |
 
 **Target MCU:** STM32C071RB on Nucleo-C071RB (previously STM32F103)
 
