@@ -23,9 +23,20 @@ void press(int8_t button_event, uint8_t fsm_mode){
     }
 }
 
+extern volatile uint8_t found_addr;
+
 int main(){
     buzzer_init(); 
     chingchong(); 
     buzzer_stop(); 
+
+    i2c_init();
+    i2c_scan();
+
+    if (found_addr){
+        oled_init();
+        oled_fill(0xFF);  // all pixels on — screen should go fully white
+    }
+
     return 0; 
 }

@@ -202,6 +202,7 @@ void buzzer_sound(uint32_t freq);
 void buzzer_stop(void);
 void buzzer_scale(void); 
 void note_len(int len); 
+void chingchong(void); 
 
 /*main_fsm.c: FSM button handling*/
 void press(int8_t button_event, uint8_t fsm_mode);
@@ -214,6 +215,9 @@ void RTC_IRQHandler(void);
 
 /*oled.c: i2c bus*/
 void i2c_scan(void);
+void i2c_init(void);
+void oled_init(void);
+void oled_fill(uint8_t val);
 
 static inline void delay(int cycles) {
     for (volatile int i = 0; i < cycles; i++)

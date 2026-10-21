@@ -4,7 +4,7 @@
 #define SCL_PIN 6U
 #define SDA_PIN 7U
 
-static void i2c_init(void){
+void i2c_init(void){
     /* enable GPIOB and I2C1 clocks*/
     RCC_IOPENR |= (1U << 1); 
     RCC_APB1ENR |= (1U << 21); 
@@ -29,7 +29,7 @@ static void i2c_init(void){
     I2C1_CR1 |= (1U << 0); 
 }
 
-static void start(void){
+void start(void){
     /*
     bit 15 of the interrupt status reg 
     checks of the bus is busy
@@ -47,7 +47,7 @@ static void start(void){
 //     I2C1_CR2 |= (1U << 14); 
 // }
 
-static int write(uint8_t byte){
+int write(uint8_t byte){
     /*
     I2C_ISR bit 1 only goes high when previous byte is ACK'd
     set transfer register to the actual command byte
@@ -58,7 +58,7 @@ static int write(uint8_t byte){
     return !(I2C1_ISR & (1U << 4)); 
 }
 
-static int oled_cmd(uint8_t cmd){
+int oled_cmd(uint8_t cmd){
     /*
     start condition
     confirm 7 bit slave address via SADD bits in C2
@@ -82,7 +82,7 @@ static int oled_cmd(uint8_t cmd){
     return res; 
 }
 
-static void oled_init(void){
+void oled_init(void){
     oled_cmd(0xAE);        // display off
     oled_cmd(0xD5); oled_cmd(0x80);  // clock divide ratio / oscillator
     oled_cmd(0xA8); oled_cmd(0x3F);  // multiplex ratio (64 rows)
@@ -101,7 +101,7 @@ static void oled_init(void){
 }
 
 /* fill all 8 pages with val — 0xFF = all pixels on, 0x00 = all off */
-static void oled_fill(uint8_t val){
+void oled_fill(uint8_t val){
     for (uint8_t page = 0; page < 8; page++){
         /* set page and column address (SH1106 has 2-pixel offset) */
         oled_cmd(0xB0 | page);  // page address
@@ -122,7 +122,7 @@ static void oled_fill(uint8_t val){
     }
 }
 
-volatile uint8_t found_addr = 0;
+volatile uint8_t found_addr; 
 
 void i2c_scan(void) {
     /*
@@ -141,15 +141,5 @@ void i2c_scan(void) {
         if (!(I2C1_ISR & (1U << 4)))
             found_addr = addr;
         I2C1_ICR |= (1U << 5) | (1U << 4);
-    }
-}
-
-int main(void){
-    i2c_init();
-    i2c_scan();
-
-    if (found_addr){
-        oled_init();
-        oled_fill(0xFF);  // all pixels on — screen should go fully white
     }
 }
