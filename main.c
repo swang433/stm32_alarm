@@ -25,7 +25,7 @@ void press(int8_t button_event, uint8_t fsm_mode){
 
 int main(){
     buzzer_init(); 
-    play(); 
+    chingchong(); 
     buzzer_stop(); 
     return 0; 
 }
