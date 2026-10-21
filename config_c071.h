@@ -131,47 +131,48 @@ I2C1: SH1106 OLED on PB6 (SCL, AF6) and PB7 (SDA, AF6)
 #define BUTTON_SNOOZE     3
 
 /*buzzer notes*/
-#define _BUZZ_C6          1047
-#define _BUZZ_CS6         1109
-#define _BUZZ_DF6         1109
-#define _BUZZ_D6          1175
-#define _BUZZ_DS6         1245
-#define _BUZZ_EF6         1245
-#define _BUZZ_E6          1319
-#define _BUZZ_F6          1397
-#define _BUZZ_FS6         1480
-#define _BUZZ_GF6         1480
-#define _BUZZ_G6          1568
-#define _BUZZ_GS6         1661
-#define _BUZZ_AF6         1661
-#define _BUZZ_A6          1760
-#define _BUZZ_AS6         1865
-#define _BUZZ_BF6         1865
-#define _BUZZ_B6          1976
-#define _BUZZ_C7          2093
-#define _BUZZ_CS7         2217
-#define _BUZZ_DF7         2217
-#define _BUZZ_D7          2349
-#define _BUZZ_DS7         2489
-#define _BUZZ_EF7         2489
-#define _BUZZ_E7          2637
-#define _BUZZ_F7          2794
-#define _BUZZ_FS7         2960
-#define _BUZZ_GF7         2960
-#define _BUZZ_G7          3136
-#define _BUZZ_GS7         3322
-#define _BUZZ_AF7         3322
-#define _BUZZ_A7          3520
-#define _BUZZ_AS7         3729
-#define _BUZZ_BF7         3729
-#define _BUZZ_B7          3951
-#define _BUZZ_C8          4186
+#define C6          1047
+#define CS6         1109
+#define DF6         1109
+#define D6          1175
+#define DS6         1245
+#define EF6         1245
+#define E6          1319
+#define F6          1397
+#define FS6         1480
+#define GF6         1480
+#define G6          1568
+#define GS6         1661
+#define AF6         1661
+#define A6          1760
+#define AS6         1865
+#define BF6         1865
+#define B6          1976
+#define C7          2093
+#define CS7         2217
+#define DF7         2217
+#define D7          2349
+#define DS7         2489
+#define EF7         2489
+#define E7          2637
+#define F7          2794
+#define FS7         2960
+#define GF7         2960
+#define G7          3136
+#define GS7         3322
+#define AF7         3322
+#define A7          3520
+#define AS7         3729
+#define BF7         3729
+#define B7          3951
+#define C8          4186
 
 /*note lengths*/
-#define EIGHTH        250  
-#define QUARTER_NOTE      (EIGHTH * 2)
-#define HALF_NOTE         (EIGHTH * 4)
-#define WHOLE_NOTE        (EIGHTH * 8)
+#define SAME_NOTE          30
+#define EIGHTH_NOTE        250  
+#define QUARTER_NOTE      (EIGHTH_NOTE * 2)
+#define HALF_NOTE         (EIGHTH_NOTE * 4)
+#define WHOLE_NOTE        (EIGHTH_NOTE * 8)
 
 /*PWM macros*/
 #define BOARD_CLOCK       12000000U

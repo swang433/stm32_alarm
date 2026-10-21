@@ -56,41 +56,85 @@ void note_len(int len){
 void buzzer_scale(void){
     // call buzzer_init() in main 
     // buzzer_sound() calls
-    buzzer_sound(_BUZZ_C6); note_len(EIGHTH);
-    buzzer_sound(_BUZZ_D6); note_len(EIGHTH);
-    buzzer_sound(_BUZZ_E6); note_len(EIGHTH);
-    buzzer_sound(_BUZZ_F6); note_len(EIGHTH);
-    buzzer_sound(_BUZZ_G6); note_len(EIGHTH);
-    buzzer_sound(_BUZZ_A6); note_len(EIGHTH);
-    buzzer_sound(_BUZZ_B6); note_len(EIGHTH);
-    buzzer_sound(_BUZZ_C7); note_len(EIGHTH); 
+    buzzer_sound(C6); note_len(EIGHTH_NOTE);
+    buzzer_sound(D6); note_len(EIGHTH_NOTE);
+    buzzer_sound(E6); note_len(EIGHTH_NOTE);
+    buzzer_sound(F6); note_len(EIGHTH_NOTE);
+    buzzer_sound(G6); note_len(EIGHTH_NOTE);
+    buzzer_sound(A6); note_len(EIGHTH_NOTE);
+    buzzer_sound(B6); note_len(EIGHTH_NOTE);
+    buzzer_sound(C7); note_len(EIGHTH_NOTE); 
     buzzer_stop();  
 }
 
 void play(void){
-    buzzer_sound(_BUZZ_BF6); note_len(QUARTER_NOTE); 
-    delay(10000);  
-    buzzer_sound(_BUZZ_BF6); note_len(EIGHTH);  
-    buzzer_sound(_BUZZ_AF6); note_len(EIGHTH);  
-    buzzer_sound(_BUZZ_BF6); note_len(QUARTER_NOTE);  
-    delay(10000);
-    buzzer_sound(_BUZZ_BF6); note_len(EIGHTH);  
-    buzzer_sound(_BUZZ_DF7); note_len(EIGHTH);  
-    delay(10000);
-    buzzer_sound(_BUZZ_DF7); note_len(QUARTER_NOTE);  
-    buzzer_sound(_BUZZ_EF7); note_len(EIGHTH);  
-    buzzer_sound(_BUZZ_DF7); note_len(EIGHTH);
-    buzzer_sound(_BUZZ_BF6); note_len(QUARTER_NOTE);  
+    // 蒼茫的天涯是我的愛
+    buzzer_sound(BF6); note_len(QUARTER_NOTE); 
+    buzzer_stop();           note_len(SAME_NOTE);  
+    buzzer_sound(BF6); note_len(EIGHTH_NOTE);  
+    buzzer_sound(AF6); note_len(EIGHTH_NOTE);  
+    buzzer_sound(BF6); note_len(QUARTER_NOTE);  
+    buzzer_stop();           note_len(SAME_NOTE);
+    buzzer_sound(BF6); note_len(EIGHTH_NOTE);  
+    buzzer_sound(DF7); note_len(EIGHTH_NOTE);  
+    buzzer_stop();           note_len(SAME_NOTE);
+    buzzer_sound(DF7); note_len(QUARTER_NOTE);  
+    buzzer_sound(EF7); note_len(EIGHTH_NOTE);  
+    buzzer_sound(DF7); note_len(EIGHTH_NOTE);
+    buzzer_sound(BF6); note_len(QUARTER_NOTE); 
     
-    // buzzer_sound(_BUZZ_BF6); note_len(QUARTER_NOTE);  
-    // buzzer_sound(_BUZZ_BF6); note_len(QUARTER_NOTE);  
-    // buzzer_sound(_BUZZ_BF6); note_len(QUARTER_NOTE);  
-    // buzzer_sound(_BUZZ_BF6); note_len(QUARTER_NOTE);  
-    // buzzer_sound(_BUZZ_BF6); note_len(QUARTER_NOTE);  
-    // buzzer_sound(_BUZZ_BF6); note_len(QUARTER_NOTE);  
-    // buzzer_sound(_BUZZ_BF6); note_len(QUARTER_NOTE);  
-    // buzzer_sound(_BUZZ_BF6); note_len(QUARTER_NOTE);  
-    // buzzer_sound(_BUZZ_BF6); note_len(QUARTER_NOTE);  
-    // buzzer_sound(_BUZZ_BF6); note_len(QUARTER_NOTE);  
-    // buzzer_sound(_BUZZ_BF6); note_len(QUARTER_NOTE);   
+    buzzer_stop();           note_len(QUARTER_NOTE);
+    
+    // 綿綿的青山脚下畫展開
+    buzzer_sound(DF7); note_len(QUARTER_NOTE);
+    buzzer_stop();           note_len(SAME_NOTE); 
+    buzzer_sound(DF7); note_len(EIGHTH_NOTE);  
+    buzzer_sound(AF6); note_len(EIGHTH_NOTE);  
+    buzzer_sound(DF7); note_len(EIGHTH_NOTE);  
+    buzzer_sound(EF7); note_len(EIGHTH_NOTE);  
+    buzzer_sound(F7); note_len(EIGHTH_NOTE);  
+    buzzer_sound(AF7); note_len(EIGHTH_NOTE);  
+    buzzer_stop();           note_len(SAME_NOTE);
+    buzzer_sound(AF7); note_len(EIGHTH_NOTE);  
+    buzzer_sound(F6); note_len(EIGHTH_NOTE);  
+    buzzer_sound(EF6); note_len(QUARTER_NOTE);  
+    buzzer_sound(F6); note_len(1.5 * QUARTER_NOTE); 
+
+    buzzer_stop();           note_len(EIGHTH_NOTE);  
+
+    // 什麽樣的節奏是最呀最搖擺
+    buzzer_sound(BF7); note_len(EIGHTH_NOTE); 
+    buzzer_stop();           note_len(SAME_NOTE);
+    buzzer_sound(BF7); note_len(EIGHTH_NOTE); 
+    buzzer_stop();           note_len(SAME_NOTE);
+    buzzer_sound(BF7); note_len(EIGHTH_NOTE); 
+    buzzer_sound(AF7); note_len(EIGHTH_NOTE); 
+    buzzer_sound(F7); note_len(EIGHTH_NOTE);
+    buzzer_stop();           note_len(SAME_NOTE); 
+    buzzer_sound(F7); note_len(1.5 * QUARTER_NOTE);
+    buzzer_sound(DF7); note_len(EIGHTH_NOTE);
+    buzzer_sound(BF6); note_len(EIGHTH_NOTE);
+    buzzer_stop();           note_len(SAME_NOTE); 
+    buzzer_sound(BF6); note_len(EIGHTH_NOTE);
+    buzzer_stop();           note_len(SAME_NOTE); 
+    buzzer_sound(BF6); note_len(EIGHTH_NOTE);
+    buzzer_sound(F7); note_len(EIGHTH_NOTE);
+    buzzer_stop();           note_len(SAME_NOTE);
+    buzzer_sound(F7); note_len(EIGHTH_NOTE);
+    buzzer_sound(EF7); note_len(1.5 * QUARTER_NOTE);
+    buzzer_stop();           note_len(EIGHTH_NOTE);
+
+    // 什麽樣的歌聲才是最開懷
+    buzzer_sound(F6); note_len(EIGHTH_NOTE);
+    buzzer_stop();           note_len(SAME_NOTE);
+    buzzer_sound(F6); note_len(EIGHTH_NOTE);
+    buzzer_sound(AF6); note_len(EIGHTH_NOTE);
+    buzzer_sound(F6); note_len(EIGHTH_NOTE);
+    buzzer_sound(EF6); note_len(EIGHTH_NOTE);
+    buzzer_sound(F6); note_len(EIGHTH_NOTE);
+    buzzer_sound(EF6); note_len(EIGHTH_NOTE);
+    buzzer_sound(DF6); note_len(EIGHTH_NOTE);
+    buzzer_sound(BF6); note_len(QUARTER_NOTE);
+    buzzer_sound(AF6); note_len(QUARTER_NOTE);
+    buzzer_sound(BF6); note_len(QUARTER_NOTE);
 }
