@@ -96,9 +96,9 @@ void play(void){
     buzzer_sound(AF7); note_len(EIGHTH_NOTE);  
     buzzer_stop();           note_len(SAME_NOTE);
     buzzer_sound(AF7); note_len(EIGHTH_NOTE);  
-    buzzer_sound(F6); note_len(EIGHTH_NOTE);  
-    buzzer_sound(EF6); note_len(QUARTER_NOTE);  
-    buzzer_sound(F6); note_len(1.5 * QUARTER_NOTE); 
+    buzzer_sound(F7); note_len(EIGHTH_NOTE);  
+    buzzer_sound(EF7); note_len(QUARTER_NOTE);  
+    buzzer_sound(F7); note_len(1.5 * QUARTER_NOTE); 
 
     buzzer_stop();           note_len(EIGHTH_NOTE);  
 
@@ -125,15 +125,15 @@ void play(void){
     buzzer_stop();           note_len(EIGHTH_NOTE);
 
     // 什麽樣的歌聲才是最開懷
-    buzzer_sound(F6); note_len(EIGHTH_NOTE);
+    buzzer_sound(F7); note_len(EIGHTH_NOTE);
     buzzer_stop();           note_len(SAME_NOTE);
-    buzzer_sound(F6); note_len(EIGHTH_NOTE);
-    buzzer_sound(AF6); note_len(EIGHTH_NOTE);
-    buzzer_sound(F6); note_len(EIGHTH_NOTE);
-    buzzer_sound(EF6); note_len(EIGHTH_NOTE);
-    buzzer_sound(F6); note_len(EIGHTH_NOTE);
-    buzzer_sound(EF6); note_len(EIGHTH_NOTE);
-    buzzer_sound(DF6); note_len(EIGHTH_NOTE);
+    buzzer_sound(F7); note_len(EIGHTH_NOTE);
+    buzzer_sound(AF7); note_len(EIGHTH_NOTE);
+    buzzer_sound(F7); note_len(EIGHTH_NOTE);
+    buzzer_sound(EF7); note_len(EIGHTH_NOTE);
+    buzzer_sound(F7); note_len(EIGHTH_NOTE);
+    buzzer_sound(EF7); note_len(EIGHTH_NOTE);
+    buzzer_sound(DF7); note_len(EIGHTH_NOTE);
     buzzer_sound(BF6); note_len(QUARTER_NOTE);
     buzzer_sound(AF6); note_len(QUARTER_NOTE);
     buzzer_sound(BF6); note_len(QUARTER_NOTE);

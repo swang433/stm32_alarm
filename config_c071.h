@@ -131,6 +131,8 @@ I2C1: SH1106 OLED on PB6 (SCL, AF6) and PB7 (SDA, AF6)
 #define BUTTON_SNOOZE     3
 
 /*buzzer notes*/
+#define AF5         830
+#define BF5         932
 #define C6          1047
 #define CS6         1109
 #define DF6         1109
