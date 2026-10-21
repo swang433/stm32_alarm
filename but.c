@@ -7,11 +7,6 @@
  * pull-ups; interrupt on falling edge.
  */
 
-static void delay(int cycles) {
-    for (volatile int i = 0; i < cycles; i++)
-        __asm__("nop");
-}
-
 static void toggle_leds(void) {
     GPIOA_ODR ^= (1U << 5);   /* LD1 on PA5 */
     GPIOC_ODR ^= (1U << 9);   /* LD2 on PC9 */

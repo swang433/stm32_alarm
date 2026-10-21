@@ -1,15 +1,5 @@
 #include "config_c071.h"
-#include <stdint.h>
-
-#define BOARD_CLOCK       12000000U
-#define GPIOA_PA7         7U
-#define PRESCALE_FACTOR   0x0BU                             /* 12 MHz / (11 + 1) = 1 MHz tick */
-#define TIMER_TICK_HZ     (BOARD_CLOCK / (PRESCALE_FACTOR + 1U))
-#define AUTO_RELOAD_INIT  0x08E0U                           /* 440 Hz at a 1 MHz tick */
-
-void buzzer_init(void);
-void buzzer_sound(uint32_t freq);
-void buzzer_stop(void);
+#include <stdint.h> 
 
 void buzzer_init(void){
     /*
@@ -57,4 +47,50 @@ void buzzer_stop(void){
     /* disable the channel 2 output and stop the counter */
     TIM3_CCER   &= ~(1U << 4);
     TIM3_CR1    &= ~(1U << 0);
+}
+
+void note_len(int len){
+    delay(len * CPS); 
+}
+
+void buzzer_scale(void){
+    // call buzzer_init() in main 
+    // buzzer_sound() calls
+    buzzer_sound(_BUZZ_C6); note_len(EIGHTH);
+    buzzer_sound(_BUZZ_D6); note_len(EIGHTH);
+    buzzer_sound(_BUZZ_E6); note_len(EIGHTH);
+    buzzer_sound(_BUZZ_F6); note_len(EIGHTH);
+    buzzer_sound(_BUZZ_G6); note_len(EIGHTH);
+    buzzer_sound(_BUZZ_A6); note_len(EIGHTH);
+    buzzer_sound(_BUZZ_B6); note_len(EIGHTH);
+    buzzer_sound(_BUZZ_C7); note_len(EIGHTH); 
+    buzzer_stop();  
+}
+
+void play(void){
+    buzzer_sound(_BUZZ_BF6); note_len(QUARTER_NOTE); 
+    delay(10000);  
+    buzzer_sound(_BUZZ_BF6); note_len(EIGHTH);  
+    buzzer_sound(_BUZZ_AF6); note_len(EIGHTH);  
+    buzzer_sound(_BUZZ_BF6); note_len(QUARTER_NOTE);  
+    delay(10000);
+    buzzer_sound(_BUZZ_BF6); note_len(EIGHTH);  
+    buzzer_sound(_BUZZ_DF7); note_len(EIGHTH);  
+    delay(10000);
+    buzzer_sound(_BUZZ_DF7); note_len(QUARTER_NOTE);  
+    buzzer_sound(_BUZZ_EF7); note_len(EIGHTH);  
+    buzzer_sound(_BUZZ_DF7); note_len(EIGHTH);
+    buzzer_sound(_BUZZ_BF6); note_len(QUARTER_NOTE);  
+    
+    // buzzer_sound(_BUZZ_BF6); note_len(QUARTER_NOTE);  
+    // buzzer_sound(_BUZZ_BF6); note_len(QUARTER_NOTE);  
+    // buzzer_sound(_BUZZ_BF6); note_len(QUARTER_NOTE);  
+    // buzzer_sound(_BUZZ_BF6); note_len(QUARTER_NOTE);  
+    // buzzer_sound(_BUZZ_BF6); note_len(QUARTER_NOTE);  
+    // buzzer_sound(_BUZZ_BF6); note_len(QUARTER_NOTE);  
+    // buzzer_sound(_BUZZ_BF6); note_len(QUARTER_NOTE);  
+    // buzzer_sound(_BUZZ_BF6); note_len(QUARTER_NOTE);  
+    // buzzer_sound(_BUZZ_BF6); note_len(QUARTER_NOTE);  
+    // buzzer_sound(_BUZZ_BF6); note_len(QUARTER_NOTE);  
+    // buzzer_sound(_BUZZ_BF6); note_len(QUARTER_NOTE);   
 }

@@ -130,6 +130,57 @@ I2C1: SH1106 OLED on PB6 (SCL, AF6) and PB7 (SDA, AF6)
 #define BUTTON_ALARM_SET  2
 #define BUTTON_SNOOZE     3
 
+/*buzzer notes*/
+#define _BUZZ_C6          1047
+#define _BUZZ_CS6         1109
+#define _BUZZ_DF6         1109
+#define _BUZZ_D6          1175
+#define _BUZZ_DS6         1245
+#define _BUZZ_EF6         1245
+#define _BUZZ_E6          1319
+#define _BUZZ_F6          1397
+#define _BUZZ_FS6         1480
+#define _BUZZ_GF6         1480
+#define _BUZZ_G6          1568
+#define _BUZZ_GS6         1661
+#define _BUZZ_AF6         1661
+#define _BUZZ_A6          1760
+#define _BUZZ_AS6         1865
+#define _BUZZ_BF6         1865
+#define _BUZZ_B6          1976
+#define _BUZZ_C7          2093
+#define _BUZZ_CS7         2217
+#define _BUZZ_DF7         2217
+#define _BUZZ_D7          2349
+#define _BUZZ_DS7         2489
+#define _BUZZ_EF7         2489
+#define _BUZZ_E7          2637
+#define _BUZZ_F7          2794
+#define _BUZZ_FS7         2960
+#define _BUZZ_GF7         2960
+#define _BUZZ_G7          3136
+#define _BUZZ_GS7         3322
+#define _BUZZ_AF7         3322
+#define _BUZZ_A7          3520
+#define _BUZZ_AS7         3729
+#define _BUZZ_BF7         3729
+#define _BUZZ_B7          3951
+#define _BUZZ_C8          4186
+
+/*note lengths*/
+#define EIGHTH        250  
+#define QUARTER_NOTE      (EIGHTH * 2)
+#define HALF_NOTE         (EIGHTH * 4)
+#define WHOLE_NOTE        (EIGHTH * 8)
+
+/*PWM macros*/
+#define BOARD_CLOCK       12000000U
+#define GPIOA_PA7         7U
+#define PRESCALE_FACTOR   0x0BU                             /* 12 MHz / (11 + 1) = 1 MHz tick */
+#define TIMER_TICK_HZ     (BOARD_CLOCK / (PRESCALE_FACTOR + 1U))
+#define AUTO_RELOAD_INIT  0x08E0U                           /* 440 Hz at a 1 MHz tick */
+#define CPS               1200
+
 /*global event flags*/
 extern volatile uint8_t current_mode;
 extern volatile int8_t button_event;
@@ -140,6 +191,30 @@ struct Curr_Time{
     uint8_t hour;
     uint8_t minute;
     uint8_t second;
-}; 
+};
+
+/*buzz.c: passive piezo buzzer, TIM3_CH2 PWM on PA7*/
+void buzzer_init(void);
+void buzzer_sound(uint32_t freq);
+void buzzer_stop(void);
+void buzzer_scale(void); 
+void note_len(int len); 
+
+/*main_fsm.c: FSM button handling*/
+void press(int8_t button_event, uint8_t fsm_mode);
+
+/*irq.c: interrupt handlers, referenced by the vector table in startup.s*/
+void EXTI0_1_IRQHandler(void);
+void EXTI2_3_IRQHandler(void);
+void EXTI4_15_IRQHandler(void);
+void RTC_IRQHandler(void);
+
+/*oled.c: i2c bus*/
+void i2c_scan(void);
+
+static inline void delay(int cycles) {
+    for (volatile int i = 0; i < cycles; i++)
+        __asm__("nop");
+}
 
 #endif

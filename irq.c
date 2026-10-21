@@ -1,12 +1,6 @@
 #include "config_c071.h" 
 extern struct Curr_Time current_time; 
 
-void delay(int cycles){
-    for (volatile int i = 0; i < cycles; i++){
-        __asm__("nop"); 
-    }
-}
-
 /*button-driven interrupt functions*/
 /* C071: EXTI0+1 share one handler */
 void EXTI0_1_IRQHandler(void){

@@ -78,7 +78,6 @@ clear_bss:
 start_main:
     bl main
     b .
-
     .global Fault_Handler
     .type   Fault_Handler, %function
 Fault_Handler:

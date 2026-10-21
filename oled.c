@@ -1,6 +1,9 @@
 #include "config_c071.h"
 #include <stdint.h>
 
+#define SCL_PIN 6U
+#define SDA_PIN 7U
+
 static void i2c_init(void){
     /* enable GPIOB and I2C1 clocks*/
     RCC_IOPENR |= (1U << 1); 
@@ -10,11 +13,11 @@ static void i2c_init(void){
     clear control bits for pins 6 and 7 
     and enable pins 6 and 7 as open drain AF open drain 
     */ 
-    GPIOB_MODER  &= ~((0x3 << 12) | (0x3 << 14)); 
-    GPIOB_MODER  |=  ((0x2 << 12) | (0x2 << 14)); 
-    GPIOB_OTYPER |=  (1U << 6)    | (1U << 7); 
-    GPIOB_PUPDR  |=  (1U << 12)   | (1U << 14); 
-    GPIOB_AFR    |=  (6U << 24)   | (6U << 28); 
+    GPIOB_MODER  &= ~((0x3 << 2 * SCL_PIN)          | (0x3 << 2 * SDA_PIN)); 
+    GPIOB_MODER  |=  ((0x2 << 2 * SCL_PIN)          | (0x2 << 2 * SDA_PIN)); 
+    GPIOB_OTYPER |=  (1U << SCL_PIN)                | (1U << SDA_PIN); 
+    GPIOB_PUPDR  |=  (1U << 2 * SCL_PIN)            | (1U << 2 * SDA_PIN); 
+    GPIOB_AFR    |=  (6U << 4 * SCL_PIN)            | (6U << 4 * SDA_PIN); 
 
     /*
     clear peripheral enable bit
@@ -141,38 +144,12 @@ void i2c_scan(void) {
     }
 }
 
-static void led_init(void){
-    RCC_IOPENR |= (1U << 0) | (1U << 2);  // GPIOA and GPIOC clocks
-    GPIOA_MODER &= ~(0x3 << 10);
-    GPIOA_MODER |=  (0x1 << 10);           // PA5 = LD1 output
-    GPIOC_MODER &= ~(0x3 << 18);
-    GPIOC_MODER |=  (0x1 << 18);           // PC9 = LD2 output
-}
-
-static void delay(volatile int cycles){
-    while(cycles--){
-        __asm__("nop"); 
-    }
-}
-
 int main(void){
     i2c_init();
     i2c_scan();
-    led_init();
 
     if (found_addr){
         oled_init();
         oled_fill(0xFF);  // all pixels on — screen should go fully white
-    }
-
-    while (1){
-        if (found_addr){
-            GPIOA_ODR ^= (1U << 5);
-            GPIOC_ODR ^= (1U << 9);
-            delay(100000);
-        } else {
-            GPIOA_ODR ^= (1U << 5);
-            delay(250000);
-        }
     }
 }

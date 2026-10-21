@@ -1,7 +1,7 @@
 MEMORY
 {
     FLASH (rx)  : ORIGIN = 0x08000000, LENGTH = 128K
-    RAM   (rwx) : ORIGIN = 0x20000000, LENGTH = 12K
+    RAM   (rwx) : ORIGIN = 0x20000000, LENGTH = 24K
 }
 
 _estack = ORIGIN(RAM) + LENGTH(RAM);
@@ -23,6 +23,7 @@ SECTIONS
 
     .data :
     {
+        . = ALIGN(4);
         _sdata = .;
         *(.data*)
         _edata = .;
@@ -30,6 +31,7 @@ SECTIONS
 
     .bss :
     {
+        . = ALIGN(4);
         _sbss = .;
         *(.bss*)
         *(COMMON)
