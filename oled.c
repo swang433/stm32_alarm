@@ -1,4 +1,4 @@
-#include "config_c071.h"
+#include "config.h"
 #include <stdint.h>
 
 #define SCL_PIN 6U

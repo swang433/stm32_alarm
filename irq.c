@@ -1,4 +1,4 @@
-#include "config_c071.h" 
+#include "config.h" 
 extern struct Curr_Time current_time; 
 
 /*button-driven interrupt functions*/
@@ -38,7 +38,6 @@ void EXTI4_15_IRQHandler(void){
     }
 }
 
-/* TODO: C071 RTC is different from F103 — no CNTH/CNTL/CRL registers.
-   C071 RTC uses TR (time), DR (date), ISR/ICSR for status, and alarm via ALRMAR.
-   Rewrite once I2C scan and GPIO are confirmed working. */
-void RTC_IRQHandler(void){}
+void RTC_IRQHandler(void){
+    //TODO: implement real time clock ISR
+}

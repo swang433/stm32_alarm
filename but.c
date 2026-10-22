@@ -1,4 +1,4 @@
-#include "config_c071.h"
+#include "config.h"
 #include <stdint.h>
 
 /*
@@ -86,8 +86,7 @@ int main(void) {
     EXTI_IMR1 |= (1U << 0) | (1U << 1) | (1U << 3) | (1U << 4);
 
     /* enable NVIC IRQs: EXTI0_1=5, EXTI2_3=6, EXTI4_15=7 */
-    volatile uint32_t *NVIC_ISER = (volatile uint32_t *)0xE000E100;
-    *NVIC_ISER |= (1U << 5) | (1U << 6) | (1U << 7);
+    NVIC_ISER |= (1U << 5) | (1U << 6) | (1U << 7);
 
     while (1) {}
 }

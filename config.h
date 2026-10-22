@@ -1,5 +1,5 @@
-#ifndef CONFIG_C071_H
-#define CONFIG_C071_H
+#ifndef CONFIG_H
+#define CONFIG_H
 
 #include <stdint.h>
 
@@ -17,10 +17,18 @@ PB:
   - pins: PB6, PB7 (CN10 pins 35 and 37)
 */
 
-//reset and clock enable registers
-#define RCC_IOPENR   (*(volatile uint32_t *)0x40021034)
-#define RCC_APB1ENR  (*(volatile uint32_t *)0x4002103C)
-#define RCC_APB2ENR  (*(volatile uint32_t *)0x40021040)
+/*
+Reset and clock control registers:
+  - RCC_IOPENR:  GPIO clock enable
+  - RCC_APB1ENR: APB1 peripheral clock enable (TIM3, I2C1, RTC APB clock)
+  - RCC_APB2ENR: APB2 peripheral clock enable
+  - RCC_CSR1:    control/status register 1 (LSE on/ready, RTC clock source and enable)
+*/
+#define RCC_BASE      0x40021000U
+#define RCC_IOPENR    (*(volatile uint32_t *)(RCC_BASE + 0x34))
+#define RCC_APB1ENR   (*(volatile uint32_t *)(RCC_BASE + 0x3C))
+#define RCC_APB2ENR   (*(volatile uint32_t *)(RCC_BASE + 0x40))
+#define RCC_CSR1      (*(volatile uint32_t *)(RCC_BASE + 0x5C))
 
 /*
 GPIOA: 
@@ -28,11 +36,12 @@ GPIOA:
   - PUPDR: pullup/pulldown registers
   - GPIOA_AFR: alternate function register for PWM
 */
-#define GPIOA_MODER  (*(volatile uint32_t *)0x50000000)
-#define GPIOA_PUPDR  (*(volatile uint32_t *)0x5000000C)
-#define GPIOA_IDR    (*(volatile uint32_t *)0x50000010)
-#define GPIOA_ODR    (*(volatile uint32_t *)0x50000014)
-#define GPIOA_AFR    (*(volatile uint32_t *)0x50000020)
+#define GPIOA_BASE   0x50000000U
+#define GPIOA_MODER  (*(volatile uint32_t *)(GPIOA_BASE + 0x00))
+#define GPIOA_PUPDR  (*(volatile uint32_t *)(GPIOA_BASE + 0x0C))
+#define GPIOA_IDR    (*(volatile uint32_t *)(GPIOA_BASE + 0x10))
+#define GPIOA_ODR    (*(volatile uint32_t *)(GPIOA_BASE + 0x14))
+#define GPIOA_AFR    (*(volatile uint32_t *)(GPIOA_BASE + 0x20))
 
 /*
 GPIOB: 
@@ -42,17 +51,19 @@ GPIOB:
   - PUPDR: pullup/pulldown register
   - GPIOB_AFR: alternate function register for I2C
 */
-#define GPIOB_MODER   (*(volatile uint32_t *)0x50000400)
-#define GPIOB_OTYPER  (*(volatile uint32_t *)0x50000404)
-#define GPIOB_OSPEEDR (*(volatile uint32_t *)0x50000408)
-#define GPIOB_PUPDR   (*(volatile uint32_t *)0x5000040C)
-#define GPIOB_IDR     (*(volatile uint32_t *)0x50000410)
-#define GPIOB_ODR     (*(volatile uint32_t *)0x50000414)
-#define GPIOB_AFR     (*(volatile uint32_t *)0x50000420)
+#define GPIOB_BASE    0x50000400U
+#define GPIOB_MODER   (*(volatile uint32_t *)(GPIOB_BASE + 0x00))
+#define GPIOB_OTYPER  (*(volatile uint32_t *)(GPIOB_BASE + 0x04))
+#define GPIOB_OSPEEDR (*(volatile uint32_t *)(GPIOB_BASE + 0x08))
+#define GPIOB_PUPDR   (*(volatile uint32_t *)(GPIOB_BASE + 0x0C))
+#define GPIOB_IDR     (*(volatile uint32_t *)(GPIOB_BASE + 0x10))
+#define GPIOB_ODR     (*(volatile uint32_t *)(GPIOB_BASE + 0x14))
+#define GPIOB_AFR     (*(volatile uint32_t *)(GPIOB_BASE + 0x20))
 
 /* GPIOC: LD2 on PC9 */
-#define GPIOC_MODER   (*(volatile uint32_t *)0x50000800)
-#define GPIOC_ODR     (*(volatile uint32_t *)0x50000814)
+#define GPIOC_BASE    0x50000800U
+#define GPIOC_MODER   (*(volatile uint32_t *)(GPIOC_BASE + 0x00))
+#define GPIOC_ODR     (*(volatile uint32_t *)(GPIOC_BASE + 0x14))
 
 /*
 EXTI: external interrupt registers for PA0, PA1, PA4, PB3
@@ -68,14 +79,42 @@ EXTI: external interrupt registers for PA0, PA1, PA4, PB3
     EXTI0_1_IRQn  (IRQ 5)  -> PA0, PA1
     EXTI2_3_IRQn  (IRQ 6)  -> PB3
     EXTI4_15_IRQn (IRQ 7)  -> PA4
+  - NVIC_ISER: nested vector interrupt controller interrupt set enable regsiter
 */
-#define EXTI_RTSR1     (*(volatile uint32_t *)0x40021800)
-#define EXTI_FTSR1     (*(volatile uint32_t *)0x40021804)
-#define EXTI_RPR1      (*(volatile uint32_t *)0x4002180C)
-#define EXTI_FPR1      (*(volatile uint32_t *)0x40021810)
-#define EXTI_EXTICR0   (*(volatile uint32_t *)0x40021860)
-#define EXTI_EXTICR1   (*(volatile uint32_t *)0x40021864)
-#define EXTI_IMR1      (*(volatile uint32_t *)0x40021880)
+#define EXTI_BASE      0x40021800U
+#define EXTI_RTSR1     (*(volatile uint32_t *)(EXTI_BASE + 0x00))
+#define EXTI_FTSR1     (*(volatile uint32_t *)(EXTI_BASE + 0x04))
+#define EXTI_RPR1      (*(volatile uint32_t *)(EXTI_BASE + 0x0C))
+#define EXTI_FPR1      (*(volatile uint32_t *)(EXTI_BASE + 0x10))
+#define EXTI_EXTICR0   (*(volatile uint32_t *)(EXTI_BASE + 0x60))
+#define EXTI_EXTICR1   (*(volatile uint32_t *)(EXTI_BASE + 0x64))
+#define EXTI_IMR1      (*(volatile uint32_t *)(EXTI_BASE + 0x80))
+#define NVIC_BASE      0xE000E100U
+#define NVIC_ISER      (*(volatile uint32_t *)(NVIC_BASE + 0x00))
+
+/*
+Real-time Clock registers: 
+  - RTC_TR: time register
+  - RTC_DR: date register
+  - RTC_ICSR: initialization control and status register
+  - RTC_PRER: prescaler register
+  - RTC_CR: control register
+  - RTC_WPR: write protect register
+  - RTC_ALRMAR: alarm A register
+  - RTC_SR: status register
+  - RTC_SCR: status clear register
+  (the RTC clock source and enable bits are in RCC_CSR1, defined with the RCC registers)
+*/
+#define RTC_BASE       0x40002800U
+#define RTC_TR         (*(volatile uint32_t *)(RTC_BASE + 0x00))
+#define RTC_DR         (*(volatile uint32_t *)(RTC_BASE + 0x04))
+#define RTC_ICSR       (*(volatile uint32_t *)(RTC_BASE + 0x0C))
+#define RTC_PRER       (*(volatile uint32_t *)(RTC_BASE + 0x10))
+#define RTC_CR         (*(volatile uint32_t *)(RTC_BASE + 0x18))
+#define RTC_WPR        (*(volatile uint32_t *)(RTC_BASE + 0x24))
+#define RTC_ALRMAR     (*(volatile uint32_t *)(RTC_BASE + 0x40))
+#define RTC_SR         (*(volatile uint32_t *)(RTC_BASE + 0x50))
+#define RTC_SCR        (*(volatile uint32_t *)(RTC_BASE + 0x5C))
 
 /*
 TIM3: PWM output on PA7 / D11 (TIM3_CH2; confirm the AF number in the datasheet)
@@ -87,13 +126,14 @@ TIM3: PWM output on PA7 / D11 (TIM3_CH2; confirm the AF number in the datasheet)
   - EGR:   event generation
   - CCR2:  capture/compare register, compare value — sets duty cycle
 */
-#define TIM3_CR1    (*(volatile uint32_t *)0x40000400)
-#define TIM3_CCMR1  (*(volatile uint32_t *)0x40000418)
-#define TIM3_CCER   (*(volatile uint32_t *)0x40000420)
-#define TIM3_PSC    (*(volatile uint32_t *)0x40000428)
-#define TIM3_ARR    (*(volatile uint32_t *)0x4000042C)
-#define TIM3_EGR    (*(volatile uint32_t* )0x40000414)
-#define TIM3_CCR2   (*(volatile uint32_t *)0x40000438)
+#define TIM3_BASE   0x40000400U
+#define TIM3_CR1    (*(volatile uint32_t *)(TIM3_BASE + 0x00))
+#define TIM3_CCMR1  (*(volatile uint32_t *)(TIM3_BASE + 0x18))
+#define TIM3_CCER   (*(volatile uint32_t *)(TIM3_BASE + 0x20))
+#define TIM3_PSC    (*(volatile uint32_t *)(TIM3_BASE + 0x28))
+#define TIM3_ARR    (*(volatile uint32_t *)(TIM3_BASE + 0x2C))
+#define TIM3_EGR    (*(volatile uint32_t *)(TIM3_BASE + 0x14))
+#define TIM3_CCR2   (*(volatile uint32_t *)(TIM3_BASE + 0x38))
 
 /*
 I2C1: SH1106 OLED on PB6 (SCL, AF6) and PB7 (SDA, AF6)
@@ -105,13 +145,14 @@ I2C1: SH1106 OLED on PB6 (SCL, AF6) and PB7 (SDA, AF6)
   - RXDR:    read received byte from here
   - TXDR:    write byte to transmit here
 */
-#define I2C1_CR1     (*(volatile uint32_t *)0x40005400)
-#define I2C1_CR2     (*(volatile uint32_t *)0x40005404)
-#define I2C1_TIMINGR (*(volatile uint32_t *)0x40005410)
-#define I2C1_ISR     (*(volatile uint32_t *)0x40005418)
-#define I2C1_ICR     (*(volatile uint32_t *)0x4000541C)
-#define I2C1_RXDR    (*(volatile uint32_t *)0x40005424)
-#define I2C1_TXDR    (*(volatile uint32_t *)0x40005428)
+#define I2C1_BASE    0x40005400U
+#define I2C1_CR1     (*(volatile uint32_t *)(I2C1_BASE + 0x00))
+#define I2C1_CR2     (*(volatile uint32_t *)(I2C1_BASE + 0x04))
+#define I2C1_TIMINGR (*(volatile uint32_t *)(I2C1_BASE + 0x10))
+#define I2C1_ISR     (*(volatile uint32_t *)(I2C1_BASE + 0x18))
+#define I2C1_ICR     (*(volatile uint32_t *)(I2C1_BASE + 0x1C))
+#define I2C1_RXDR    (*(volatile uint32_t *)(I2C1_BASE + 0x24))
+#define I2C1_TXDR    (*(volatile uint32_t *)(I2C1_BASE + 0x28))
 
 #define OLED_ADDR    (const uint32_t)0x3C
 #define CMD_CONTROL  0x00
@@ -202,7 +243,7 @@ void buzzer_sound(uint32_t freq);
 void buzzer_stop(void);
 void buzzer_scale(void); 
 void note_len(int len); 
-void chingchong(void); 
+void song(void); 
 
 /*main_fsm.c: FSM button handling*/
 void press(int8_t button_event, uint8_t fsm_mode);

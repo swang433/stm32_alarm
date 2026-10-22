@@ -1,4 +1,4 @@
-#include "config_c071.h"
+#include "config.h"
 #include <stdint.h> 
 
 void buzzer_init(void){
@@ -67,7 +67,7 @@ void buzzer_scale(void){
     buzzer_stop();  
 }
 
-void chingchong(void){
+void song(void){
     // 蒼茫的天涯是我的愛
     buzzer_sound(BF6); note_len(QUARTER_NOTE); 
     buzzer_stop();           note_len(SAME_NOTE);  

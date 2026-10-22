@@ -2,21 +2,21 @@
 
 Bare-metal alarm clock firmware written in C with direct register access — no HAL or CMSIS abstraction layer.
 
-> **Prototyping board:** Nucleo-C071RB (STM32C071RB, Cortex-M0+). Config registers are in `config_c071.h`. The original STM32F1xx register definitions are preserved in `config_stm32f.h`.
+> **Prototyping board:** Nucleo-C071RB (STM32C071RB, Cortex-M0+). Config registers are in `config.h`.
 
 ## Features
 
 - Real-time clock using the STM32 internal RTC peripheral
-- SSH1106 OLED display over I2C
+- SH1106 OLED display over I2C
 - Passive piezo buzzer driven by PWM
-- Four-button input with hardware debouncing via EXTI interrupts
+- Four-button with software busy-wait debouncing
 - Finite state machine with three operating modes
 
 ## Hardware
 
 | Peripheral | Interface | Pin(s) |
 |---|---|---|
-| SSH1106 OLED Display | I2C | PB6 SCL (D1), PB7 SDA (D0) |
+| SH1106 OLED Display | I2C | PB6 SCL (D1), PB7 SDA (D0) |
 | Passive Piezo Buzzer | PWM | PA7 (D11) |
 | Tactile Buttons (×4) | Digital Input (pull-up) | PA0 (A0), PA1 (A1), PA4 (A2), PB3 (D9) |
 
@@ -47,11 +47,11 @@ MODE_CLOCK (0) ──► MODE_SET_TIME (1)
 
 ```
 alarm/
-├── config_c071.h  # Register definitions for STM32C071RB (active)
+├── config.h       # Register definitions for STM32C071RB (active)
 ├── irq.c          # EXTI interrupt handlers with software debounce (real firmware ISRs)
-├── main_fsm.c     # FSM logic and main entry point
-├── oled.c         # SSH1106 display driver (I2C); currently also a standalone I2C test with its own main
-├── buzz.c         # Buzzer driver: TIM3_CH2 PWM on PA7 (buzzer_init, buzzer_sound, buzzer_stop)
+├── main.c         # FSM logic and main entry point
+├── oled.c         # SH1106 display driver (I2C)
+├── buzz.c         # Buzzer driver: TIM3_CH2 PWM on PA7 (buzzer_init, buzzer_sound, buzzer_stop, and functions for playing melodies)
 ├── but.c          # Standalone button test: each button toggles LD1 (PA5) and LD2 (PC9)
 ├── startup.s      # Cortex-M0+ startup and vector table in assembly
 ├── linker.ld      # Linker script for flash/RAM layout
@@ -85,14 +85,16 @@ STM32_Programmer_CLI -c port=SWD -w firmware.bin 0x08000000 -v -rst
 ## Challenges Faced
 
 ### GD32F103 I2C Peripheral Incompatibility
-The target board uses a GD32F103C8T6, a Chinese STM32F103-compatible clone. While the GD32 is pin and register-compatible with the STM32 for most peripherals, the hardware I2C peripheral behaves differently — the GD32's I2C state machine has timing differences that cause it to silently fail when following the standard STM32F103 register-level initialization sequence. The OLED would not be detected at address `0x3C` and no ACK was received. The fix was to abandon the hardware I2C peripheral entirely and implement bit-bang I2C on PB6/PB7 using direct GPIO toggling, which bypasses the peripheral and works identically on both chips.
+The target board was a GD32F103C8T6, a Chinese STM32F103-compatible clone. While the GD32 is pin and register-compatible with the STM32 for most peripherals, the hardware I2C peripheral behaves differently — the GD32's I2C state machine has timing differences that cause it to silently fail when following the standard STM32F103 register-level initialization sequence. The OLED would not be detected at address `0x3C` and no ACK was received. The fix was to abandon the hardware I2C peripheral entirely and implement bit-bang I2C on PB6/PB7 using direct GPIO toggling, which bypasses the peripheral and works identically on both chips. This was also later abandoned in favor of the STM32C071RB Nucleo Board which contains the actual STM32C071 chip that contains proper I2C peripherals.
 
 ### Display Refresh Speed Bottleneck
-The bit-bang I2C implementation runs at approximately 50kHz due to the 50-NOP `dly()` calls inserted between every SCL/SDA transition. Clearing the full display requires 1024 I2C bytes (128 columns × 8 pages), each requiring 9 clock pulses with multiple delay calls. This makes a full `oled_clear()` + redraw take significant time, limiting how fast the display can be updated. Options to address this: switch to the hardware I2C peripheral at 400kHz (blocked by the GD32 compatibility issue above), reduce NOP count in `dly()` (risks missed ACKs), or avoid full clears by only redrawing changed regions.
+On the GD32, the bit-bang I2C implementation ran at approximately 50kHz due to the 50-NOP `dly()` calls inserted between every SCL/SDA transition. Clearing the full display requires 1024 I2C bytes (128 columns × 8 pages), each requiring 9 clock pulses with multiple delay calls. This made a full clear + redraw take significant time, limiting how fast the display could be updated.
+
+This was resolved by moving to the Nucleo-C071RB, where the hardware I2C1 peripheral is used instead (`TIMINGR` configured for a 400kHz bus, roughly 8× the old bit rate, with the hardware handling the clock and START/STOP). To keep updates fast, the display code should still avoid full clears and only redraw the regions that changed.
 
 ## Implementation Notes
 
 - All peripherals are configured by direct memory-mapped register writes defined in `config.h`.
-- Button debounce is handled inside each EXTI ISR using a busy-wait NOP loop (`DEBOUNCE_MS = 20 ms`).
+- Button debounce is handled inside each EXTI ISR using a busy-wait NOP loop (`DEBOUNCE_MS = 20`, which comes out to around 170ms of actual debouncing).
 - Button events are communicated to the FSM via a `volatile` global flag (`button_event`).
 - The RTC uses the STM32's internal `RTC_CNT` counter with alarm support via `RTC_ALR`.

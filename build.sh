@@ -2,7 +2,7 @@
 # Build firmware.elf and firmware.bin for the Nucleo-C071RB.
 # Usage: ./build.sh <source.c> [more.c ...]
 #   e.g. ./build.sh but.c
-#        ./build.sh main_fsm.c irq.c oled.c
+#        ./build.sh main.c irq.c oled.c
 set -euo pipefail
 
 if [ $# -lt 1 ]; then

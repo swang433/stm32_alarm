@@ -1,4 +1,4 @@
-#include "config_c071.h"
+#include "config.h"
 #include <stdint.h>
 
 /*global event flags*/
@@ -27,7 +27,7 @@ extern volatile uint8_t found_addr;
 
 int main(){
     buzzer_init(); 
-    chingchong(); 
+    song(); 
     buzzer_stop(); 
 
     i2c_init();
