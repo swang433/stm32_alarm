@@ -32,11 +32,19 @@ int main(){
 
     i2c_init();
     i2c_scan();
+    if (!found_addr)
+        while (1);              // no OLED found, stop here
 
-    if (found_addr){
-        oled_init();
-        oled_fill(0xFF);  // all pixels on — screen should go fully white
+    oled_init();
+    oled_fill(0x00);
+    rtc_init(12, 0, 0);         // placeholder start time until set-time mode works
+
+    uint8_t h, m, s, last_s = 0xFF;
+    while (1){
+        rtc_read(&h, &m, &s);
+        if (s != last_s){       // only redraw when the second rolls over
+            last_s = s;
+            oled_time(h, m, s);
+        }
     }
-
-    return 0; 
 }

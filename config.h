@@ -259,6 +259,11 @@ void i2c_scan(void);
 void i2c_init(void);
 void oled_init(void);
 void oled_fill(uint8_t val);
+void oled_time(uint8_t h, uint8_t m, uint8_t s);
+
+/*rtc.c: real time clock on LSE*/
+void rtc_init(uint8_t h, uint8_t m, uint8_t s);
+void rtc_read(uint8_t *h, uint8_t *m, uint8_t *s);
 
 static inline void delay(int cycles) {
     for (volatile int i = 0; i < cycles; i++)

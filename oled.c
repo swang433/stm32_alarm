@@ -143,3 +143,57 @@ void i2c_scan(void) {
         I2C1_ICR |= (1U << 5) | (1U << 4);
     }
 }
+
+static const uint8_t font_digits[11][5] = {
+    {0x3E,0x51,0x49,0x45,0x3E}, {0x00,0x42,0x7F,0x40,0x00},
+    {0x42,0x61,0x51,0x49,0x46}, {0x21,0x41,0x45,0x4B,0x31},
+    {0x18,0x14,0x12,0x7F,0x10}, {0x27,0x45,0x45,0x45,0x39},
+    {0x3C,0x4A,0x49,0x49,0x30}, {0x01,0x71,0x09,0x05,0x03},
+    {0x36,0x49,0x49,0x49,0x36}, {0x06,0x49,0x49,0x29,0x1E},
+    {0x00,0x36,0x36,0x00,0x00},
+};
+
+static void oled_set_cursor(uint8_t page, uint8_t col){
+    col += 2; 
+    oled_cmd(0xB0 | page); 
+    oled_cmd(0x00 | (col & 0x0F)); 
+    oled_cmd(0x10 | (col >> 4)); 
+}
+
+static void oled_data(const uint8_t *buf, uint8_t len){
+    start(); 
+    I2C1_CR2 = (OLED_ADDR << 1) | ((uint32_t)(len + 1) << 16) | (1U << 25) | (1U << 13);
+    write(0x40);  
+    for (uint8_t i = 0; i < len; i++) write(buf[i]); 
+    while (!(I2C1_ISR & (1U << 5))); 
+    I2C1_ICR |= (1U << 5); 
+}
+
+/* double each bit vertically: bit i -> bits 2i and 2i+1 */
+static uint16_t stretch(uint8_t b){
+    uint16_t r = 0;
+    for (uint8_t i = 0; i < 8; i++)
+        if (b & (1U << i)) r |= 3U << (2 * i);
+    return r;
+}
+
+static void oled_char2x(uint8_t page, uint8_t col, char c){
+    uint8_t idx = (c == ':') ? 10 : (uint8_t)(c - '0');
+    uint8_t top[12], bot[12];
+    top[10] = top[11] = bot[10] = bot[11] = 0;   // spacing columns; avoids memset under -nostdlib
+    for (uint8_t i = 0; i < 5; i++){
+        uint16_t s = stretch(font_digits[idx][i]);
+        top[2*i] = top[2*i + 1] = s & 0xFF;
+        bot[2*i] = bot[2*i + 1] = s >> 8;
+    }
+    oled_set_cursor(page, col);     oled_data(top, 12);
+    oled_set_cursor(page + 1, col); oled_data(bot, 12);
+}
+
+/* "HH:MM:SS" centred: 8 chars x 12px = 96px, starting at column 16, pages 3-4 */
+void oled_time(uint8_t h, uint8_t m, uint8_t s){
+    char str[8] = { '0' + h/10, '0' + h%10, ':', '0' + m/10, '0' + m%10,
+                    ':', '0' + s/10, '0' + s%10 };
+    for (uint8_t i = 0; i < 8; i++)
+        oled_char2x(3, 16 + 12*i, str[i]);
+}

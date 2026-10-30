@@ -17,6 +17,7 @@ SECTIONS
     {
         *(.text*)
         *(.rodata*)
+        . = ALIGN(4);   /* startup.s copies .data with word loads; M0+ faults on unaligned ldr */
     } > FLASH
 
     _sidata = LOADADDR(.data);
@@ -26,6 +27,7 @@ SECTIONS
         . = ALIGN(4);
         _sdata = .;
         *(.data*)
+        . = ALIGN(4);
         _edata = .;
     } > RAM AT > FLASH
 
@@ -35,6 +37,7 @@ SECTIONS
         _sbss = .;
         *(.bss*)
         *(COMMON)
+        . = ALIGN(4);
         _ebss = .;
     } > RAM
 }
