@@ -67,7 +67,7 @@ GPIOB:
 
 /*
 EXTI: external interrupt registers for PA0, PA1, PA4, PB3
-  - RTSR1:      rising edge trigger selection (lines 0,1,3,4)
+  - RTSR1:      rising edge trigger selection (lines 0,1,3,4, only necessary for long presses)
   - FTSR1:      falling edge trigger selection (lines 0,1,3,4)
   - RPR1:       rising edge pending — write 1 to clear in ISR
   - FPR1:       falling edge pending — write 1 to clear in ISR
@@ -212,7 +212,8 @@ I2C1: SH1106 OLED on PB6 (SCL, AF6) and PB7 (SDA, AF6)
 
 /*note lengths*/
 #define SAME_NOTE          30
-#define EIGHTH_NOTE        250  
+#define EIGHTH_NOTE        125
+#define SIXTEENTH          EIGHTH_NOTE / 2  
 #define QUARTER_NOTE      (EIGHTH_NOTE * 2)
 #define HALF_NOTE         (EIGHTH_NOTE * 4)
 #define WHOLE_NOTE        (EIGHTH_NOTE * 8)
@@ -249,6 +250,7 @@ void song(void);
 void press(int8_t button_event, uint8_t fsm_mode);
 
 /*irq.c: interrupt handlers, referenced by the vector table in startup.s*/
+void but_init(void); 
 void EXTI0_1_IRQHandler(void);
 void EXTI2_3_IRQHandler(void);
 void EXTI4_15_IRQHandler(void);

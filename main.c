@@ -7,7 +7,45 @@ volatile int8_t button_event = BUTTON_NONE;
 volatile uint8_t time_changed = 0;
 volatile uint8_t alarm_sound = 0;
 
-void press(int8_t button_event, uint8_t fsm_mode){
+static uint8_t edit_h, edit_m;          // time being edited in SET_TIME
+static uint8_t alarm_h = 7, alarm_m = 0;
+static uint8_t field = 0;               // 0 = hours, 1 = minutes
+#define EXTI_MASK ((1 << 0) | (1 << 1) | (1 << 3) | (1 << 4))
+
+void but_init(){
+    /*
+    TODO: 
+    initialize GPIO ports A and B 
+        - enable GPIO on ports A and B
+        - set the button pins as inputs
+        - set pins PA0, PA1, PA4, PB3 to input pullup
+    
+    initialize external interrupt lines 0, 1, 3, 4
+        - route EXTI line 3 to port B in EXTICR (lines 0, 1, 4 default to port A)
+        - listen to falling edges on EXTI lines 0, 1, 3, and 4 (press pulls the pin low)
+        - unmask lines 0, 1, 3, 4 in IMR1
+        - clear any pending flags in FPR1 left over from setup
+
+    enable the interrupts in the NVIC last
+        - EXTI0_1 (IRQ 5), EXTI2_3 (IRQ 6), EXTI4_15 (IRQ 7) in NVIC_ISER
+    */
+
+    // GPIO
+    RCC_IOPENR  |=  (1 << 0) | (1 << 1);
+    GPIOA_MODER &= ~((3 << 0) | (3 << 2) | (3 << 8));      GPIOB_MODER &= ~(3 << 6); 
+    GPIOA_PUPDR |=  (1 << 0) | (1 << 2 * 1) | (1 << 2 * 4); GPIOB_PUPDR |= (1 << 2 * 3);  
+
+    // EXTI
+    EXTI_EXTICR0 |= (1U << 24); // route EXTI line 3 to port B
+    EXTI_FTSR1 |=  EXTI_MASK; 
+    EXTI_IMR1  |=  EXTI_MASK; 
+    EXTI_FPR1  |=  EXTI_MASK; 
+
+    // NVIC 
+    NVIC_ISER |= (1U << 5) | (1U << 6) | (1U << 7);
+}
+
+void press(int8_t button_pressed, uint8_t fsm_mode){
     switch (fsm_mode){
         case MODE_CLOCK:
             /* logic */
@@ -18,7 +56,7 @@ void press(int8_t button_event, uint8_t fsm_mode){
             break;
         
         case MODE_SET_TIME:
-            /* logic */
+            edit_h = 0; edit_m = 0; 
             break; 
     }
 }
@@ -26,10 +64,8 @@ void press(int8_t button_event, uint8_t fsm_mode){
 extern volatile uint8_t found_addr;
 
 int main(){
-    buzzer_init(); 
-    song(); 
-    buzzer_stop(); 
-
+    but_init(); 
+    buzzer_init();  
     i2c_init();
     i2c_scan();
     if (!found_addr)
@@ -37,7 +73,7 @@ int main(){
 
     oled_init();
     oled_fill(0x00);
-    rtc_init(12, 0, 0);         // placeholder start time until set-time mode works
+    rtc_init(13, 10, 20);         // placeholder start time until set-time mode works
 
     uint8_t h, m, s, last_s = 0xFF;
     while (1){

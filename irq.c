@@ -8,13 +8,13 @@ void EXTI0_1_IRQHandler(void){
         delay(8000 * DEBOUNCE_MS);
         if (!(GPIOA_IDR & (1U << 0)))
             button_event = BUTTON_INCREMENT;
-        EXTI_FPR1 |= (1U << 0);
+        EXTI_FPR1 = (1U << 0);
     }
     if (EXTI_FPR1 & (1U << 1)){
         delay(8000 * DEBOUNCE_MS);
         if (!(GPIOA_IDR & (1U << 1)))
             button_event = BUTTON_DECREMENT;
-        EXTI_FPR1 |= (1U << 1);
+        EXTI_FPR1 = (1U << 1);
     }
 }
 
@@ -24,7 +24,7 @@ void EXTI2_3_IRQHandler(void){
         delay(8000 * DEBOUNCE_MS);
         if (!(GPIOB_IDR & (1U << 3)))
             button_event = BUTTON_ALARM_SET;
-        EXTI_FPR1 |= (1U << 3);
+        EXTI_FPR1 = (1U << 3);
     }
 }
 
@@ -34,7 +34,7 @@ void EXTI4_15_IRQHandler(void){
         delay(8000 * DEBOUNCE_MS);
         if (!(GPIOA_IDR & (1U << 4)))
             button_event = BUTTON_SNOOZE;
-        EXTI_FPR1 |= (1U << 4);
+        EXTI_FPR1 = (1U << 4);
     }
 }
 
