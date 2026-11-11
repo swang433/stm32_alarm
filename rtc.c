@@ -2,8 +2,10 @@
 #include <stdint.h>
 
 /* start the RTC from the 32.768 kHz LSE crystal and set the time.
-   if the RTC was already initialised (e.g. after a reset-button press), leave it running */
-void rtc_init(uint8_t h, uint8_t m, uint8_t s){
+   if the RTC was already initialised (e.g. after a reset-button press), leave it running 
+*/
+
+void rtc_init(){
     RCC_APB1ENR |= (1U << 10);                  // RTC APB clock
     if (RTC_ICSR & (1U << 4)) return;           // INITS: calendar already set
 
@@ -11,7 +13,9 @@ void rtc_init(uint8_t h, uint8_t m, uint8_t s){
     while (!(RCC_CSR1 & (1U << 1)));            // wait LSERDY
     RCC_CSR1 = (RCC_CSR1 & ~(3U << 8)) | (1U << 8);  // RTCSEL = LSE
     RCC_CSR1 |= (1U << 15);                     // RTCEN
+}
 
+void rtc_set(uint8_t h, uint8_t m, uint8_t s){
     /* unlock, enter init mode, write time in BCD, leave init mode, relock.
        PRER reset value (127, 255) already divides 32768 Hz down to 1 Hz */
     RTC_WPR = 0xCA;

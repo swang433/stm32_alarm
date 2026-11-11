@@ -5,7 +5,7 @@
 - [x] Measure the real debounce delay: ~173 ms (13 cycles/loop at 12 MHz, ~923 loops/ms); left as is, works fine
 
 ## RTC
-- [ ] Split the unlock → INIT → write TR → relock part of `rtc_init()` into `rtc_set()` so set-time mode can write a new time
+- [x] Split the unlock → INIT → write TR → relock part of `rtc_init()` into `rtc_set()` so set-time mode can write a new time
 - [ ] If LSE never starts (stuck on LSERDY), fall back to LSI: `RCC_CSR2` LSION, `RTCSEL = 10`, `PRER = (127 << 16) | 249`
 
 ## FSM (main.c)

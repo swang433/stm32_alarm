@@ -113,3 +113,11 @@ void song(void){
     buzzer_sound(F6); note_len(EIGHTH_NOTE);
     buzzer_sound(BF7); note_len(QUARTER_NOTE);
 }
+
+void error_sound(void){
+    /* two short high beeps then a pause; call in a loop to repeat */
+    buzzer_sound(A7); note_len(SIXTEENTH);
+    buzzer_stop();    note_len(SIXTEENTH);
+    buzzer_sound(A7); note_len(SIXTEENTH);
+    buzzer_stop();    note_len(HALF_NOTE);
+}

@@ -7,23 +7,23 @@ void EXTI0_1_IRQHandler(void){
     if (EXTI_FPR1 & (1U << 0)){
         delay(8000 * DEBOUNCE_MS);
         if (!(GPIOA_IDR & (1U << 0)))
-            button_event = BUTTON_INCREMENT;
+            button_event = BUTTON_UP;
         EXTI_FPR1 = (1U << 0);
     }
     if (EXTI_FPR1 & (1U << 1)){
         delay(8000 * DEBOUNCE_MS);
         if (!(GPIOA_IDR & (1U << 1)))
-            button_event = BUTTON_DECREMENT;
+            button_event = BUTTON_DOWN;
         EXTI_FPR1 = (1U << 1);
     }
 }
 
-/* C071: EXTI2+3 share one handler — PB3 = BUTTON_ALARM_SET */
+/* C071: EXTI2+3 share one handler — PB3 = BUTTON_SET */
 void EXTI2_3_IRQHandler(void){
     if (EXTI_FPR1 & (1U << 3)){
         delay(8000 * DEBOUNCE_MS);
         if (!(GPIOB_IDR & (1U << 3)))
-            button_event = BUTTON_ALARM_SET;
+            button_event = BUTTON_SET;
         EXTI_FPR1 = (1U << 3);
     }
 }

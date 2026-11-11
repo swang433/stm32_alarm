@@ -163,12 +163,13 @@ I2C1: SH1106 OLED on PB6 (SCL, AF6) and PB7 (SDA, AF6)
 #define MODE_CLOCK      0
 #define MODE_SET_TIME   1
 #define MODE_SET_ALARM  2
+#define MODE_RING       3
 
 /*button event macros*/
 #define BUTTON_NONE      -1
-#define BUTTON_INCREMENT  0
-#define BUTTON_DECREMENT  1
-#define BUTTON_ALARM_SET  2
+#define BUTTON_UP  0
+#define BUTTON_DOWN  1
+#define BUTTON_SET  2
 #define BUTTON_SNOOZE     3
 
 /*buzzer notes*/
@@ -245,6 +246,7 @@ void buzzer_stop(void);
 void buzzer_scale(void); 
 void note_len(int len); 
 void song(void); 
+void error_sound(void); 
 
 /*main_fsm.c: FSM button handling*/
 void press(int8_t button_event, uint8_t fsm_mode);
@@ -264,7 +266,8 @@ void oled_fill(uint8_t val);
 void oled_time(uint8_t h, uint8_t m, uint8_t s);
 
 /*rtc.c: real time clock on LSE*/
-void rtc_init(uint8_t h, uint8_t m, uint8_t s);
+void rtc_init();
+void rtc_set(uint8_t h, uint8_t m, uint8_t s); 
 void rtc_read(uint8_t *h, uint8_t *m, uint8_t *s);
 
 static inline void delay(int cycles) {
