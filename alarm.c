@@ -67,7 +67,7 @@ void buzzer_scale(void){
     buzzer_stop();  
 }
 
-void song(void){
+void wakey_wakey(void){
     buzzer_sound(F6); note_len(EIGHTH_NOTE);
     buzzer_sound(BF7); note_len(EIGHTH_NOTE);
     buzzer_sound(D7); note_len(SIXTEENTH);
@@ -90,8 +90,6 @@ void song(void){
     buzzer_sound(D7); note_len(QUARTER_NOTE);
     buzzer_sound(BF7); note_len(EIGHTH_NOTE);
     buzzer_sound(F6); note_len(EIGHTH_NOTE);
-
-    buzzer_stop(); note_len(SAME_NOTE); 
 
     buzzer_sound(BF7); note_len(EIGHTH_NOTE);
     buzzer_sound(D7); note_len(SIXTEENTH);
@@ -116,8 +114,8 @@ void song(void){
 
 void error_sound(void){
     /* two short high beeps then a pause; call in a loop to repeat */
-    buzzer_sound(A7); note_len(SIXTEENTH);
+    buzzer_sound(CS7); note_len(SIXTEENTH);
     buzzer_stop();    note_len(SIXTEENTH);
-    buzzer_sound(A7); note_len(SIXTEENTH);
+    buzzer_sound(CS7); note_len(SIXTEENTH);
     buzzer_stop();    note_len(HALF_NOTE);
 }

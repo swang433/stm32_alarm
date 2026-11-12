@@ -10,6 +10,8 @@ volatile uint8_t alarm_sound = 0;
 static uint8_t edit_h, edit_m;          // time being edited in SET_TIME / SET_ALARM
 static uint8_t alarm_h = 7, alarm_m = 0;
 #define EXTI_MASK ((1 << 0) | (1 << 1) | (1 << 3) | (1 << 4))
+static uint8_t alarm_count; 
+Time alarms[MAX_ALARMS]; 
 
 void but_init(){
     /*
@@ -92,19 +94,26 @@ void press(int8_t button_pressed, uint8_t fsm_mode){
             else if (button_pressed == BUTTON_SET){
                 if (fsm_mode == MODE_SET_TIME)
                     rtc_set(edit_h, edit_m, 0);
+                else if (alarm_count >= MAX_ALARMS){
+                    error_sound(); 
+                }
                 else{
                     alarm_h = edit_h; alarm_m = edit_m;
+                    Time new_alarm = {edit_h, edit_m, 0};
+                    alarms[alarm_count] = new_alarm; 
+                    alarm_count++; 
                 }
-                current_mode = MODE_CLOCK;
-            }
+                current_mode = MODE_CLOCK; 
+                }
             break;
         
         case MODE_RING:
-            error_sound(); 
+            wakey_wakey(); 
             if (button_pressed == BUTTON_SNOOZE){
                 buzzer_stop(); 
                 current_mode = MODE_CLOCK;
             }
+            break;
     }
 }
 
@@ -127,11 +136,11 @@ int main(){
     rtc_set(13, 10, 20);         // placeholder start time until set-time mode works
 
     uint8_t h, m, s, last_s = 0xFF;
-    while (1){
-        rtc_read(&h, &m, &s);
-        if (s != last_s){       // only redraw when the second rolls over
-            last_s = s;
-            oled_time(h, m, s);
-        }
+    while (1){ 
+        if (button_event != BUTTON_NONE){
+            int8_t curr_event = button_event; 
+            button_event = BUTTON_NONE; 
+            press(curr_event, current_mode); 
+        }   
     }
 }

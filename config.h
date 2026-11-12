@@ -214,7 +214,7 @@ I2C1: SH1106 OLED on PB6 (SCL, AF6) and PB7 (SDA, AF6)
 /*note lengths*/
 #define SAME_NOTE          30
 #define EIGHTH_NOTE        125
-#define SIXTEENTH          EIGHTH_NOTE / 2  
+#define SIXTEENTH         (EIGHTH_NOTE / 2)
 #define QUARTER_NOTE      (EIGHTH_NOTE * 2)
 #define HALF_NOTE         (EIGHTH_NOTE * 4)
 #define WHOLE_NOTE        (EIGHTH_NOTE * 8)
@@ -233,11 +233,14 @@ extern volatile int8_t button_event;
 extern volatile uint8_t time_changed;
 extern volatile uint8_t alarm_sound;
 
-struct Curr_Time{
+/*alarm params*/
+typedef struct{
     uint8_t hour;
     uint8_t minute;
     uint8_t second;
-};
+}Time;
+
+#define MAX_ALARMS 4
 
 /*buzz.c: passive piezo buzzer, TIM3_CH2 PWM on PA7*/
 void buzzer_init(void);
@@ -245,8 +248,8 @@ void buzzer_sound(uint32_t freq);
 void buzzer_stop(void);
 void buzzer_scale(void); 
 void note_len(int len); 
-void song(void); 
 void error_sound(void); 
+void wakey_wakey(void); 
 
 /*main_fsm.c: FSM button handling*/
 void press(int8_t button_event, uint8_t fsm_mode);

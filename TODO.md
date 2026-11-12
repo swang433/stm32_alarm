@@ -23,7 +23,7 @@
 - [ ] Save alarm time to flash (last page, write only on confirm — ~10k erase cycles)
 
 ## Cleanup
-- [ ] Remove `struct Curr_Time` (`config.h`) and `extern struct Curr_Time current_time` (`irq.c`); the RTC is the source of truth
+- [ ] Remove `struct Time` (`config.h`) and `extern struct Time current_time` (`irq.c`); the RTC is the source of truth
 - [ ] Convert FSM mode and button `#define`s to enums (and the variables/parameters that hold them)
 - [ ] `build.sh` writes `output.bin` but the README says `firmware.bin`; make them match
 - [ ] `build.sh`: default to building every `.c` except `but.c` when no args are given
