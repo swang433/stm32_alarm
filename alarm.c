@@ -112,10 +112,22 @@ void wakey_wakey(void){
     buzzer_sound(BF7); note_len(QUARTER_NOTE);
 }
 
-void error_sound(void){
+void no_addr_sound(void){
     /* two short high beeps then a pause; call in a loop to repeat */
     buzzer_sound(CS7); note_len(SIXTEENTH);
     buzzer_stop();    note_len(SIXTEENTH);
     buzzer_sound(CS7); note_len(SIXTEENTH);
     buzzer_stop();    note_len(HALF_NOTE);
+}
+
+void duplicate_alarms_sound(void){
+    /* sad trombone: womp womp womp wooomp, stepping down; plays once */
+    buzzer_sound(D6);  note_len(EIGHTH_NOTE);
+    buzzer_stop();     note_len(SAME_NOTE);
+    buzzer_sound(CS6); note_len(EIGHTH_NOTE);
+    buzzer_stop();     note_len(SAME_NOTE);
+    buzzer_sound(C6);  note_len(EIGHTH_NOTE);
+    buzzer_stop();     note_len(SAME_NOTE);
+    buzzer_sound(BF5); note_len(HALF_NOTE);
+    buzzer_stop();
 }

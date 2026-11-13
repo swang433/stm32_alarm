@@ -2,6 +2,8 @@
 #define CONFIG_H
 
 #include <stdint.h>
+#include <stdio.h>
+#include <stdbool.h>
 
 /*
 ports used: 
@@ -91,6 +93,7 @@ EXTI: external interrupt registers for PA0, PA1, PA4, PB3
 #define EXTI_IMR1      (*(volatile uint32_t *)(EXTI_BASE + 0x80))
 #define NVIC_BASE      0xE000E100U
 #define NVIC_ISER      (*(volatile uint32_t *)(NVIC_BASE + 0x00))
+#define EXTI_MASK      ((1 << 0) | (1 << 1) | (1 << 3) | (1 << 4))
 
 /*
 Real-time Clock registers: 
@@ -160,17 +163,21 @@ I2C1: SH1106 OLED on PB6 (SCL, AF6) and PB7 (SDA, AF6)
 #define DEBOUNCE_MS 20
 
 /*FSM modes*/
-#define MODE_CLOCK      0
-#define MODE_SET_TIME   1
-#define MODE_SET_ALARM  2
-#define MODE_RING       3
+typedef enum {
+    MODE_CLOCK,
+    MODE_SET_TIME,
+    MODE_SET_ALARM,
+    MODE_RING
+} fsm_mode_t;
 
-/*button event macros*/
-#define BUTTON_NONE      -1
-#define BUTTON_UP  0
-#define BUTTON_DOWN  1
-#define BUTTON_SET  2
-#define BUTTON_SNOOZE     3
+/*button events*/
+typedef enum {
+    BUTTON_NONE = -1,
+    BUTTON_UP,
+    BUTTON_DOWN,
+    BUTTON_SET,
+    BUTTON_SNOOZE
+} button_t;
 
 /*buzzer notes*/
 #define AF5         830
@@ -228,10 +235,8 @@ I2C1: SH1106 OLED on PB6 (SCL, AF6) and PB7 (SDA, AF6)
 #define CPS               1200
 
 /*global event flags*/
-extern volatile uint8_t current_mode;
-extern volatile int8_t button_event;
-extern volatile uint8_t time_changed;
-extern volatile uint8_t alarm_sound;
+extern volatile fsm_mode_t current_mode;
+extern volatile button_t button_event;
 
 /*alarm params*/
 typedef struct{
@@ -241,6 +246,7 @@ typedef struct{
 }Time;
 
 #define MAX_ALARMS 4
+bool same_time(const Time* arr, const Time* clock_time, int sz); 
 
 /*buzz.c: passive piezo buzzer, TIM3_CH2 PWM on PA7*/
 void buzzer_init(void);
@@ -248,11 +254,12 @@ void buzzer_sound(uint32_t freq);
 void buzzer_stop(void);
 void buzzer_scale(void); 
 void note_len(int len); 
-void error_sound(void); 
+void no_addr_sound(void); 
+void duplicate_alarms_sound(void); 
 void wakey_wakey(void); 
 
 /*main_fsm.c: FSM button handling*/
-void press(int8_t button_event, uint8_t fsm_mode);
+void press(button_t button_pressed, fsm_mode_t fsm_mode);
 
 /*irq.c: interrupt handlers, referenced by the vector table in startup.s*/
 void but_init(void); 

@@ -52,7 +52,6 @@ alarm/
 ├── main.c         # FSM logic and main entry point
 ├── oled.c         # SH1106 display driver (I2C)
 ├── buzz.c         # Buzzer driver: TIM3_CH2 PWM on PA7 (buzzer_init, buzzer_sound, buzzer_stop, and functions for playing melodies)
-├── but.c          # Standalone button test: each button toggles LD1 (PA5) and LD2 (PC9)
 ├── startup.s      # Cortex-M0+ startup and vector table in assembly
 ├── linker.ld      # Linker script for flash/RAM layout
 └── build.sh       # Builds firmware.elf and firmware.bin from the given source files
@@ -61,8 +60,6 @@ alarm/
 ## Building & Flashing
 
 Requires `arm-none-eabi-gcc`, `arm-none-eabi-objcopy`, and STM32CubeProgrammer (for flashing). The startup file (`startup.s`) and linker script (`linker.ld`) are included.
-
-`but.c` is a standalone test of the button wiring and logic, and it defines the same interrupt handlers as `irq.c`, so build one or the other, never both. The real firmware uses the handlers in `irq.c`.
 
 **1. Build** — compiles, links, and converts to binary in one step. Pass the source files to build (`startup.s` and `linker.ld` are added automatically):
 ```bash
@@ -95,6 +92,6 @@ This was resolved by moving to the Nucleo-C071RB, where the hardware I2C1 periph
 ## Implementation Notes
 
 - All peripherals are configured by direct memory-mapped register writes defined in `config.h`.
-- Button debounce is handled inside each EXTI ISR using a busy-wait NOP loop (`DEBOUNCE_MS = 20`, which comes out to around 170ms of actual debouncing).
+- Button debounce is handled inside each EXTI ISR using a busy-wait NOP loop (`DEBOUNCE_minS = 20`, which comes out to around 170ms of actual debouncing).
 - Button events are communicated to the FSM via a `volatile` global flag (`button_event`).
 - The RTC uses the STM32's internal `RTC_CNT` counter with alarm support via `RTC_ALR`.

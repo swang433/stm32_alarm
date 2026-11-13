@@ -1,5 +1,4 @@
 #include "config.h" 
-extern struct Time current_time; 
 
 /*button-driven interrupt functions*/
 /* C071: EXTI0+1 share one handler */
