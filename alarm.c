@@ -15,10 +15,10 @@ void buzzer_init(void){
     */
     RCC_IOPENR  |=  (1U << 0);
     RCC_APB1ENR |=  (1U << 1);
-    GPIOA_MODER &= ~(3U   << 2 * GPIOA_PA7);
-    GPIOA_MODER |=  (2U   << 2 * GPIOA_PA7);
-    GPIOA_AFR   &= ~(0xFU << 4 * GPIOA_PA7);
-    GPIOA_AFR   |=  (1U   << 4 * GPIOA_PA7);
+    GPIOA_MODER &= ~(3U   << 2 * BUZZER_PIN);
+    GPIOA_MODER |=  (2U   << 2 * BUZZER_PIN);
+    GPIOA_AFR   &= ~(0xFU << 4 * BUZZER_PIN);
+    GPIOA_AFR   |=  (1U   << 4 * BUZZER_PIN);
     TIM3_PSC    =   PRESCALE_FACTOR;
     TIM3_ARR    =   AUTO_RELOAD_INIT;
     TIM3_CCR2   =   TIM3_ARR >> 1;
@@ -54,8 +54,7 @@ void note_len(int len){
 }
 
 void buzzer_scale(void){
-    // call buzzer_init() in main 
-    // buzzer_sound() calls
+    /* C6 to C7 scale; a quick buzzer test (needs buzzer_init() first) */
     buzzer_sound(C6); note_len(EIGHTH_NOTE);
     buzzer_sound(D6); note_len(EIGHTH_NOTE);
     buzzer_sound(E6); note_len(EIGHTH_NOTE);

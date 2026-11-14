@@ -1,11 +1,10 @@
 #include "config.h"
 #include <stdint.h>
 
-/* start the RTC from the 32.768 kHz LSE crystal and set the time.
+/* start the RTC from the 32.768 kHz LSE crystal; the time itself is written by rtc_set().
    if the RTC was already initialised (e.g. after a reset-button press), leave it running 
 */
-
-void rtc_init(){
+void rtc_init(void){
     RCC_APB1ENR |= (1U << 10);                  // RTC APB clock
     if (RTC_ICSR & (1U << 4)) return;           // INITS: calendar already set
 

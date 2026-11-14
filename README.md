@@ -9,8 +9,9 @@ Bare-metal alarm clock firmware written in C with direct register access — no 
 - Real-time clock using the STM32 internal RTC peripheral
 - SH1106 OLED display over I2C
 - Passive piezo buzzer driven by PWM
-- Four-button with software busy-wait debouncing
-- Finite state machine with three operating modes
+- Four buttons with software busy-wait debouncing
+- Finite state machine with four operating modes
+- Up to 4 alarms, with duplicate detection
 
 ## Hardware
 
@@ -26,44 +27,56 @@ Bare-metal alarm clock firmware written in C with direct register access — no 
 
 | MCU Pin | Arduino Header | Button | Action |
 |---|---|---|---|
-| PA0 | A0 | Increment | Increases the selected time field |
-| PA1 | A1 | Decrement | Decreases the selected time field |
-| PB3 | D9 | Set Time| Enters/confirms alarm setting mode |
-| PA4 | A2 | Snooze / Set Alarm | Snoozes an active alarm |
+| PA0 | A0 | Up | In a set mode: one minute later (carries into the hour) |
+| PA1 | A1 | Down | In a set mode: one minute earlier |
+| PB3 | D9 | Set | In clock mode: enter set time. In a set mode: confirm and return to clock |
+| PA4 | A2 | Snooze | In clock mode: enter set alarm. While ringing: dismiss the alarm |
 
 ## FSM Modes
 
-```
-MODE_CLOCK (0) ──► MODE_SET_TIME (1)
-     ▲                    │
-     └──── MODE_SET_ALARM (2) ◄──┘
-```
+| From | Event | To |
+|---|---|---|
+| Clock | Set | Set Time |
+| Clock | Snooze | Set Alarm |
+| Clock | Alarm time reached | Ring |
+| Set Time | Up / Down | Set Time (time ±1 min) |
+| Set Time | Set | Clock (time written to the RTC) |
+| Set Alarm | Up / Down | Set Alarm (alarm ±1 min) |
+| Set Alarm | Set | Clock (alarm saved) |
+| Ring | Snooze | Clock |
 
-- **Clock** — default display, shows current time
-- **Set Time** — adjust hours and minutes using increment/decrement
-- **Set Alarm** — configure the alarm trigger time
+- **Clock**: default display, shows the current time from the RTC
+- **Set Time**: up/down change the time one minute at a time; set writes it to the RTC
+- **Set Alarm**: up/down change the alarm time; set saves it (rejects duplicates and a full list)
+- **Ring**: plays the alarm tune until snooze is pressed; each alarm rings once per matching minute
+
+The time blinks twice a second in both set modes.
 
 ## Project Structure
 
 ```
 alarm/
-├── config.h       # Register definitions for STM32C071RB (active)
-├── irq.c          # EXTI interrupt handlers with software debounce (real firmware ISRs)
-├── main.c         # FSM logic and main entry point
-├── oled.c         # SH1106 display driver (I2C)
-├── buzz.c         # Buzzer driver: TIM3_CH2 PWM on PA7 (buzzer_init, buzzer_sound, buzzer_stop, and functions for playing melodies)
+├── config.h       # Register definitions, enums and prototypes for STM32C071RB
+├── main.c         # Button setup, FSM logic and main loop
+├── irq.c          # EXTI interrupt handlers with software debounce
+├── rtc.c          # RTC on the 32.768 kHz LSE: init, set and read the time
+├── oled.c         # SH1106 display driver (I2C) and 2x digit font
+├── alarm.c        # Buzzer driver (TIM3_CH2 PWM on PA7) and melodies
+├── memcpy.c       # memcpy for struct copies, since the build uses -nostdlib
 ├── startup.s      # Cortex-M0+ startup and vector table in assembly
 ├── linker.ld      # Linker script for flash/RAM layout
-└── build.sh       # Builds firmware.elf and firmware.bin from the given source files
+├── build.sh       # Builds firmware.elf and firmware.bin
+└── TODO.md        # Remaining work
 ```
 
 ## Building & Flashing
 
 Requires `arm-none-eabi-gcc`, `arm-none-eabi-objcopy`, and STM32CubeProgrammer (for flashing). The startup file (`startup.s`) and linker script (`linker.ld`) are included.
 
-**1. Build** — compiles, links, and converts to binary in one step. Pass the source files to build (`startup.s` and `linker.ld` are added automatically):
+**1. Build** compiles, links and converts to binary in one step. Run it in Git Bash (not WSL, and not `.uild.sh` from PowerShell). With no arguments it builds every `.c` file except the standalone tests `but.c` and `test.c`; pass files to build only those (`startup.s` and `linker.ld` are added automatically):
 ```bash
-./build.sh <source.c> [more.c ...]
+./build.sh
+./build.sh but.c
 ```
 
 This produces `firmware.elf` and `firmware.bin`.
@@ -92,6 +105,6 @@ This was resolved by moving to the Nucleo-C071RB, where the hardware I2C1 periph
 ## Implementation Notes
 
 - All peripherals are configured by direct memory-mapped register writes defined in `config.h`.
-- Button debounce is handled inside each EXTI ISR using a busy-wait NOP loop (`DEBOUNCE_minS = 20`, which comes out to around 170ms of actual debouncing).
+- Button debounce is handled inside each EXTI ISR using a busy-wait NOP loop (`DEBOUNCE_MS = 20`, which comes out to around 170 ms of actual debouncing at 12 MHz).
 - Button events are communicated to the FSM via a `volatile` global flag (`button_event`).
-- The RTC uses the STM32's internal `RTC_CNT` counter with alarm support via `RTC_ALR`.
+- The RTC runs from the LSE crystal; the time is read from `RTC_TR` (BCD) and blinking uses the sub-second counter `RTC_SSR`. Alarms are matched in the main loop rather than with the RTC alarm hardware.

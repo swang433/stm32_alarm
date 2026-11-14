@@ -11,7 +11,7 @@ void i2c_init(void){
 
     /* 
     clear control bits for pins 6 and 7 
-    and enable pins 6 and 7 as open drain AF open drain 
+    and set pins 6 and 7 to alternate function, open drain, pull-up, AF6 
     */ 
     GPIOB_MODER  &= ~((0x3 << 2 * SCL_PIN)          | (0x3 << 2 * SDA_PIN)); 
     GPIOB_MODER  |=  ((0x2 << 2 * SCL_PIN)          | (0x2 << 2 * SDA_PIN)); 
@@ -22,32 +22,22 @@ void i2c_init(void){
     /*
     clear peripheral enable bit
     set timing for 400khz I2C slave clock
-    enable peripherl
+    enable peripheral
     */
     I2C1_CR1 &= ~(1U << 0);  
     I2C1_TIMINGR = 3598; 
     I2C1_CR1 |= (1U << 0); 
 }
 
-void start(void){
+static void i2c_start(void){
     /*
     bit 15 of the interrupt status reg 
-    checks of the bus is busy
+    checks if the bus is busy
     */
     while(I2C1_ISR & (1U << 15)); 
 }
 
-// dead code since AUTOEND is enabled
-// static void stop(void){
-//     /*
-//     wait for byte transfer finished (BTF)
-//     stop signal
-//     */
-//     while(!(I2C1_ISR & (1U << 6))); 
-//     I2C1_CR2 |= (1U << 14); 
-// }
-
-int write(uint8_t byte){
+static int i2c_write(uint8_t byte){
     /*
     I2C_ISR bit 1 only goes high when previous byte is ACK'd
     set transfer register to the actual command byte
@@ -58,7 +48,7 @@ int write(uint8_t byte){
     return !(I2C1_ISR & (1U << 4)); 
 }
 
-int oled_cmd(uint8_t cmd){
+static int oled_cmd(uint8_t cmd){
     /*
     start condition
     confirm 7 bit slave address via SADD bits in C2
@@ -69,13 +59,13 @@ int oled_cmd(uint8_t cmd){
     actual command
     stop condition done via AUTOEND
     */
-    start();  
+    i2c_start();  
     I2C1_CR2 = (OLED_ADDR << 1) 
             |  (2U << 16)
             |  (1U << 25)
             |  (1U << 13); 
-    write(CMD_CONTROL); 
-    int res = write(cmd); 
+    i2c_write(CMD_CONTROL); 
+    int res = i2c_write(cmd); 
     
     while(!(I2C1_ISR & (1U << 5))); 
     I2C1_ICR |= (1U << 5); 
@@ -109,14 +99,14 @@ void oled_fill(uint8_t val){
         oled_cmd(0x10);         // column high nibble
 
         /* send 128 data bytes: 1 control byte + 128 pixel bytes = 129 total */
-        start();
+        i2c_start();
         I2C1_CR2 = (OLED_ADDR << 1)
                  | (129U << 16)
                  | (1U << 25)
                  | (1U << 13);
-        write(0x40);            // data control byte
+        i2c_write(0x40);            // data control byte
         for (uint8_t col = 0; col < 128; col++)
-            write(val);
+            i2c_write(val);
         while (!(I2C1_ISR & (1U << 5)));
         I2C1_ICR |= (1U << 5);
     }
@@ -161,10 +151,10 @@ static void oled_set_cursor(uint8_t page, uint8_t col){
 }
 
 static void oled_data(const uint8_t *buf, uint8_t len){
-    start(); 
+    i2c_start(); 
     I2C1_CR2 = (OLED_ADDR << 1) | ((uint32_t)(len + 1) << 16) | (1U << 25) | (1U << 13);
-    write(0x40);  
-    for (uint8_t i = 0; i < len; i++) write(buf[i]); 
+    i2c_write(0x40);  
+    for (uint8_t i = 0; i < len; i++) i2c_write(buf[i]); 
     while (!(I2C1_ISR & (1U << 5))); 
     I2C1_ICR |= (1U << 5); 
 }

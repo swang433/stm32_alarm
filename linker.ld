@@ -4,6 +4,8 @@ MEMORY
     RAM   (rwx) : ORIGIN = 0x20000000, LENGTH = 24K
 }
 
+ENTRY(Reset_Handler)
+
 _estack = ORIGIN(RAM) + LENGTH(RAM);
 
 SECTIONS

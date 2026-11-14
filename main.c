@@ -6,13 +6,12 @@ volatile button_t button_event = BUTTON_NONE;
 
 /*time variables*/
 static uint8_t set_hour, set_min;          // time being edited in SET_TIME / SET_ALARM
-static uint8_t alarmset_hour = 0, alarmset_min = 15;
+static uint8_t alarm_hour = 0, alarm_min = 15;          // last confirmed alarm, preloaded into SET_ALARM
 static uint8_t alarm_count; 
-Time alarms[MAX_ALARMS]; 
+clock_time_t alarms[MAX_ALARMS]; 
 
-void but_init(){
+void but_init(void){
     /*
-    TODO: 
     initialize GPIO ports A and B 
         - enable GPIO on ports A and B
         - set the button pins as inputs
@@ -58,7 +57,7 @@ void press(button_t button_pressed, fsm_mode_t fsm_mode){
                 current_mode = MODE_SET_TIME;
             }
             else if (button_pressed == BUTTON_SNOOZE){
-                set_hour = alarmset_hour; set_min = alarmset_min;
+                set_hour = alarm_hour; set_min = alarm_min;
                 current_mode = MODE_SET_ALARM;
             }
             break;
@@ -96,20 +95,20 @@ void press(button_t button_pressed, fsm_mode_t fsm_mode){
                     no_addr_sound(); 
                 }
                 else{
-                    alarmset_hour = set_hour; alarmset_min = set_min;
-                    Time new_alarm = {set_hour, set_min, 0};
+                    alarm_hour = set_hour; alarm_min = set_min;
+                    clock_time_t new_alarm = {set_hour, set_min, 0};
 
                     if (same_time(alarms, &new_alarm, alarm_count)){
                         duplicate_alarms_sound();
                     }
                     else{
-                        /* field-by-field: a whole-struct copy makes gcc call memcpy, which -nostdlib lacks */
+                        /* whole-struct copy: gcc emits a memcpy call, provided by memcpy.c */
                         alarms[alarm_count] = new_alarm; 
                         alarm_count++; 
                     }
                 }
                 current_mode = MODE_CLOCK; 
-                }
+            }
             break;
         
         case MODE_RING:
@@ -122,18 +121,17 @@ void press(button_t button_pressed, fsm_mode_t fsm_mode){
     }
 }
 
-bool same_time(const Time* arr, const Time* clock_time, int sz){
-    for (int i = 0; i < sz; i++){
-        if (arr[i].hour == clock_time->hour && arr[i].minute == clock_time->minute){
+bool same_time(const clock_time_t *list, const clock_time_t *t, int count){
+    /* hour + minute match against any of the first count alarms; seconds are ignored */
+    for (int i = 0; i < count; i++){
+        if (list[i].hour == t->hour && list[i].minute == t->minute){
             return true; 
         }
     }
     return false; 
 }
 
-extern volatile uint8_t found_addr;
-
-int main(){
+int main(void){
     but_init(); 
     buzzer_init();  
     i2c_init();
@@ -146,7 +144,7 @@ int main(){
 
     oled_init();
     oled_fill(0x00);
-    rtc_init();        // placeholder start time until set-time mode works
+    rtc_init();                         // keeps running across resets; time is set in SET_TIME
 
     uint8_t h, m, s, last_s = 0xFF;
     uint8_t last_quarter = 0xFF; 
@@ -168,7 +166,7 @@ int main(){
             }
 
             /* checked after press(), so a press that left clock mode this pass is never overridden */
-            Time now = {h, m, s};
+            clock_time_t now = {h, m, s};
             if (!same_time(alarms, &now, alarm_count)){
                 rung = false;           // minute moved on: re-arm for the next match
             }
@@ -182,7 +180,7 @@ int main(){
             uint32_t ssr = RTC_SSR;
             uint32_t quarter = ssr >> 6; 
             (void)RTC_DR; 
-            hide = (quarter % 2 == 0) ? true : false; 
+            hide = (quarter % 2 == 0);          // RTC_SSR >> 6 = quarter second: blink twice a second
             if (quarter != last_quarter){
                 last_quarter = quarter; 
                 oled_time(set_hour, set_min, 0, hide);

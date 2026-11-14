@@ -38,18 +38,19 @@
 - [ ] Delete / clear alarms (once `alarm_count == MAX_ALARMS` no new alarm can be saved)
 - [ ] Make the ring non-blocking, so Snooze responds mid-tune (`wakey_wakey()` blocks for the whole tune)
 - [ ] Save alarms to flash (last page, write only on confirm — ~10k erase cycles)
-- [ ] Decide whether `alarmset_hour` / `alarmset_min` stay once `alarms[]` is the source of truth
+- [ ] Decide whether `alarm_hour` / `alarm_min` stay once `alarms[]` is the source of truth
 
 ## Cleanup
 
 - [x] Undo the mangled rename (`M` → `min`, `H` → `hour`): `EXTI_MASK`, `GPIOx_MODER`, `DEBOUNCE_MS`, `TIMER_TICK_HZ`, `CONFIG_H`, `fsm_mode`, `current_mode`
-- [x] Remove `extern struct Time current_time` in `irq.c` (unused; `Time` itself is now used for `alarms[]`)
+- [x] Remove `extern struct Time current_time` in `irq.c` (unused; the struct, now `clock_time_t`, is used for `alarms[]`)
 - [x] Remove unused `SIZE_TIME`, `alarm_sound` and `time_changed`
 - [x] Convert FSM mode and button `#define`s to enums (`fsm_mode_t`, `button_t`) and the variables/parameters that hold them
 - [x] `build.sh` writes `firmware.bin`, matching the README
 - [x] `build.sh`: with no args, builds every `.c` except `but.c` and `test.c` (both are standalone tests)
 - [x] Whole-struct copies: solved by providing `memcpy` in `memcpy.c`
-- [ ] Stale comments: "field-by-field" above `alarms[alarm_count] = new_alarm;` and "placeholder start time" next to `rtc_init()` in `main.c`; "and set the time" above `rtc_init()` in `rtc.c`
+- [x] Stale comments in `main.c` and `rtc.c`
+- [x] Naming pass: `Time` → `clock_time_t`, `alarmset_*` → `alarm_*`, `GPIOA_PA7` → `BUZZER_PIN`, `start` / `write` → `i2c_start` / `i2c_write` (now `static` with `oled_cmd`), `(void)` parameter lists, header section comments, README brought up to date; `startup.s` labels `Reset_hourandler` / `Fault_hourandler` / `start_minain` restored to `Reset_Handler` / `Fault_Handler` / `start_main`, `ENTRY(Reset_Handler)` added to `linker.ld`
 
 ## Nice to have
 

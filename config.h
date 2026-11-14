@@ -2,7 +2,6 @@
 #define CONFIG_H
 
 #include <stdint.h>
-#include <stdio.h>
 #include <stdbool.h>
 
 /*
@@ -15,7 +14,7 @@ PA:
 PB:
   - button (GPIOB)
   - pin: PB3
-  - SSH1106 OLED (I2C peripheral)
+  - SH1106 OLED (I2C peripheral)
   - pins: PB6, PB7 (CN10 pins 35 and 37)
 */
 
@@ -74,14 +73,14 @@ EXTI: external interrupt registers for PA0, PA1, PA4, PB3
   - RPR1:       rising edge pending — write 1 to clear in ISR
   - FPR1:       falling edge pending — write 1 to clear in ISR
   - EXTICR[0]:  maps EXTI lines 0-3 to a GPIO port (0x0 = GPIOA, 0x1 = GPIOB);
-                one byte per line, so line 3 (PB3) is bits [26:24]
+                one byte per line, so line 3 (PB3) is bits [31:24]
   - EXTICR[1]:  maps EXTI lines 4-7 to a GPIO port (0x0 = GPIOA)
   - IMR1:       interrupt mask — unmask lines 0,1,3,4 to enable
   IRQ handlers needed:
     EXTI0_1_IRQn  (IRQ 5)  -> PA0, PA1
     EXTI2_3_IRQn  (IRQ 6)  -> PB3
     EXTI4_15_IRQn (IRQ 7)  -> PA4
-  - NVIC_ISER: nested vector interrupt controller interrupt set enable regsiter
+  - NVIC_ISER: nested vector interrupt controller interrupt set enable register
 */
 #define EXTI_BASE      0x40021800U
 #define EXTI_RTSR1     (*(volatile uint32_t *)(EXTI_BASE + 0x00))
@@ -99,6 +98,7 @@ EXTI: external interrupt registers for PA0, PA1, PA4, PB3
 Real-time Clock registers: 
   - RTC_TR: time register
   - RTC_DR: date register
+  - RTC_SSR: sub-second register (counts PREDIV_S..0 each second; used for blinking)
   - RTC_ICSR: initialization control and status register
   - RTC_PRER: prescaler register
   - RTC_CR: control register
@@ -229,7 +229,7 @@ typedef enum {
 
 /*PWM macros*/
 #define BOARD_CLOCK       12000000U
-#define GPIOA_PA7         7U
+#define BUZZER_PIN        7U                                /* PA7, TIM3_CH2 */
 #define PRESCALE_FACTOR   0x0BU                             /* 12 MHz / (11 + 1) = 1 MHz tick */
 #define TIMER_TICK_HZ     (BOARD_CLOCK / (PRESCALE_FACTOR + 1U))
 #define AUTO_RELOAD_INIT  0x08E0U                           /* 440 Hz at a 1 MHz tick */
@@ -244,12 +244,11 @@ typedef struct{
     uint8_t hour;
     uint8_t minute;
     uint8_t second;
-}Time;
+} clock_time_t;
 
 #define MAX_ALARMS 4
-bool same_time(const Time* arr, const Time* clock_time, int sz); 
 
-/*buzz.c: passive piezo buzzer, TIM3_CH2 PWM on PA7*/
+/*alarm.c: passive piezo buzzer, TIM3_CH2 PWM on PA7, and the melodies*/
 void buzzer_init(void);
 void buzzer_sound(uint32_t freq);
 void buzzer_stop(void);
@@ -259,17 +258,19 @@ void no_addr_sound(void);
 void duplicate_alarms_sound(void); 
 void wakey_wakey(void); 
 
-/*main_fsm.c: FSM button handling*/
+/*main.c: button setup, FSM button handling, alarm lookup*/
+void but_init(void);
 void press(button_t button_pressed, fsm_mode_t fsm_mode);
+bool same_time(const clock_time_t *list, const clock_time_t *t, int count);
 
 /*irq.c: interrupt handlers, referenced by the vector table in startup.s*/
-void but_init(void); 
 void EXTI0_1_IRQHandler(void);
 void EXTI2_3_IRQHandler(void);
 void EXTI4_15_IRQHandler(void);
 void RTC_IRQHandler(void);
 
-/*oled.c: i2c bus*/
+/*oled.c: I2C bus and SH1106 drawing*/
+extern volatile uint8_t found_addr;
 void i2c_scan(void);
 void i2c_init(void);
 void oled_init(void);
@@ -277,7 +278,7 @@ void oled_fill(uint8_t val);
 void oled_time(uint8_t h, uint8_t m, uint8_t s, bool hide);
 
 /*rtc.c: real time clock on LSE*/
-void rtc_init();
+void rtc_init(void);
 void rtc_set(uint8_t h, uint8_t m, uint8_t s); 
 void rtc_read(uint8_t *h, uint8_t *m, uint8_t *s);
 

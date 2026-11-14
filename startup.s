@@ -4,9 +4,9 @@
 
     .section .isr_vector, "a"
     .word   _estack
-    .word   Reset_hourandler
-    .word   Fault_hourandler /* NMI */
-    .word   Fault_hourandler /* HardFault */
+    .word   Reset_Handler
+    .word   Fault_Handler /* NMI */
+    .word   Fault_Handler /* HardFault */
     .word   0           /* Reserved */
     .word   0           /* Reserved */
     .word   0           /* Reserved */
@@ -48,9 +48,9 @@
     .word   0           /* USART2 */
 
     .section .text
-    .global Reset_hourandler
-    .type   Reset_hourandler, %function
-Reset_hourandler:
+    .global Reset_Handler
+    .type   Reset_Handler, %function
+Reset_Handler:
     /* copy .data from flash to RAM */
     ldr r0, =_sdata
     ldr r1, =_edata
@@ -70,15 +70,15 @@ zero_bss:
     movs r2, #0
 clear_bss:
     cmp r0, r1
-    bge start_minain
+    bge start_main
     str r2, [r0]
     adds r0, r0, #4
     b clear_bss
 
-start_minain:
+start_main:
     bl main
     b .
-    .global Fault_hourandler
-    .type   Fault_hourandler, %function
-Fault_hourandler:
+    .global Fault_Handler
+    .type   Fault_Handler, %function
+Fault_Handler:
     b .
