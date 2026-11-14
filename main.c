@@ -5,8 +5,8 @@ volatile fsm_mode_t current_mode = MODE_CLOCK;
 volatile button_t button_event = BUTTON_NONE;
 
 /*time variables*/
-static uint8_t _hour, _min;          // time being edited in SET_TIME / SET_ALARM
-static uint8_t alarm_hour = 7, alarm_min = 0;
+static uint8_t set_hour, set_min;          // time being edited in SET_TIME / SET_ALARM
+static uint8_t alarmset_hour = 0, alarmset_min = 15;
 static uint8_t alarm_count; 
 Time alarms[MAX_ALARMS]; 
 
@@ -54,11 +54,11 @@ void press(button_t button_pressed, fsm_mode_t fsm_mode){
             */
             if (button_pressed == BUTTON_SET){
                 uint8_t s;
-                rtc_read(&_hour, &_min, &s);
+                rtc_read(&set_hour, &set_min, &s);
                 current_mode = MODE_SET_TIME;
             }
             else if (button_pressed == BUTTON_SNOOZE){
-                _hour = alarm_hour; _min = alarm_min;
+                set_hour = alarmset_hour; set_min = alarmset_min;
                 current_mode = MODE_SET_ALARM;
             }
             break;
@@ -72,32 +72,32 @@ void press(button_t button_pressed, fsm_mode_t fsm_mode){
                 set confirms: write the RTC or the alarm, then back to clock
             */
             if (button_pressed == BUTTON_UP){
-                if (_min == 59){
-                    _min = 0;
-                    _hour = (_hour + 1) % 24;
+                if (set_min == 59){
+                    set_min = 0;
+                    set_hour = (set_hour + 1) % 24;
                 }
                 else{
-                    _min++;
+                    set_min++;
                 }
             }
             else if (button_pressed == BUTTON_DOWN){
-                if (_min == 0){
-                    _min = 59;
-                    _hour = (_hour + 23) % 24;
+                if (set_min == 0){
+                    set_min = 59;
+                    set_hour = (set_hour + 23) % 24;
                 }
                 else{
-                    _min--;
+                    set_min--;
                 }
             }
             else if (button_pressed == BUTTON_SET){
                 if (fsm_mode == MODE_SET_TIME)
-                    rtc_set(_hour, _min, 0);
+                    rtc_set(set_hour, set_min, 0);
                 else if (alarm_count >= MAX_ALARMS){
                     no_addr_sound(); 
                 }
                 else{
-                    alarm_hour = _hour; alarm_min = _min;
-                    Time new_alarm = {_hour, _min, 0};
+                    alarmset_hour = set_hour; alarmset_min = set_min;
+                    Time new_alarm = {set_hour, set_min, 0};
 
                     if (same_time(alarms, &new_alarm, alarm_count)){
                         duplicate_alarms_sound();
@@ -149,9 +149,12 @@ int main(){
     rtc_init();        // placeholder start time until set-time mode works
 
     uint8_t h, m, s, last_s = 0xFF;
+    uint8_t last_quarter = 0xFF; 
+
     bool rung = false;                  // true while the current matching minute has already rung
     while (1){
         if (button_event != BUTTON_NONE){
+            last_quarter = 0xFF; last_s = 0xFF;
             button_t curr_event = button_event;
             button_event = BUTTON_NONE;
             press(curr_event, current_mode);
@@ -161,7 +164,7 @@ int main(){
             rtc_read(&h, &m, &s);
             if (s != last_s){           // only redraw when the second rolls over
                 last_s = s;
-                oled_time(h, m, s);
+                oled_time(h, m, s, false);
             }
 
             /* checked after press(), so a press that left clock mode this pass is never overridden */
@@ -173,6 +176,17 @@ int main(){
                 rung = true;            // ring once per matching minute, even after a dismiss
                 current_mode = MODE_RING;
             }
+        }
+        else if (current_mode == MODE_SET_ALARM || current_mode == MODE_SET_TIME){
+            bool hide;
+            uint32_t ssr = RTC_SSR;
+            uint32_t quarter = ssr >> 6; 
+            (void)RTC_DR; 
+            hide = (quarter % 2 == 0) ? true : false; 
+            if (quarter != last_quarter){
+                last_quarter = quarter; 
+                oled_time(set_hour, set_min, 0, hide);
+            } 
         }
         else if (current_mode == MODE_RING){
             wakey_wakey();              // blocks for the length of the tune; a press during it is held by the ISR

@@ -28,8 +28,8 @@ Bare-metal alarm clock firmware written in C with direct register access — no 
 |---|---|---|---|
 | PA0 | A0 | Increment | Increases the selected time field |
 | PA1 | A1 | Decrement | Decreases the selected time field |
-| PB3 | D9 | Alarm Set | Enters/confirms alarm setting mode |
-| PA4 | A2 | Snooze | Snoozes an active alarm |
+| PB3 | D9 | Set Time| Enters/confirms alarm setting mode |
+| PA4 | A2 | Snooze / Set Alarm | Snoozes an active alarm |
 
 ## FSM Modes
 

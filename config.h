@@ -111,6 +111,7 @@ Real-time Clock registers:
 #define RTC_BASE       0x40002800U
 #define RTC_TR         (*(volatile uint32_t *)(RTC_BASE + 0x00))
 #define RTC_DR         (*(volatile uint32_t *)(RTC_BASE + 0x04))
+#define RTC_SSR        (*(volatile uint32_t *)(RTC_BASE + 0x08))
 #define RTC_ICSR       (*(volatile uint32_t *)(RTC_BASE + 0x0C))
 #define RTC_PRER       (*(volatile uint32_t *)(RTC_BASE + 0x10))
 #define RTC_CR         (*(volatile uint32_t *)(RTC_BASE + 0x18))
@@ -273,7 +274,7 @@ void i2c_scan(void);
 void i2c_init(void);
 void oled_init(void);
 void oled_fill(uint8_t val);
-void oled_time(uint8_t h, uint8_t m, uint8_t s);
+void oled_time(uint8_t h, uint8_t m, uint8_t s, bool hide);
 
 /*rtc.c: real time clock on LSE*/
 void rtc_init();

@@ -144,13 +144,13 @@ void i2c_scan(void) {
     }
 }
 
-static const uint8_t font_digits[11][5] = {
+static const uint8_t font_digits[12][5] = {
     {0x3E,0x51,0x49,0x45,0x3E}, {0x00,0x42,0x7F,0x40,0x00},
     {0x42,0x61,0x51,0x49,0x46}, {0x21,0x41,0x45,0x4B,0x31},
     {0x18,0x14,0x12,0x7F,0x10}, {0x27,0x45,0x45,0x45,0x39},
     {0x3C,0x4A,0x49,0x49,0x30}, {0x01,0x71,0x09,0x05,0x03},
     {0x36,0x49,0x49,0x49,0x36}, {0x06,0x49,0x49,0x29,0x1E},
-    {0x00,0x36,0x36,0x00,0x00},
+    {0x00,0x36,0x36,0x00,0x00}, {0x00,0x00,0x00,0x00,0x00}
 };
 
 static void oled_set_cursor(uint8_t page, uint8_t col){
@@ -178,7 +178,7 @@ static uint16_t stretch(uint8_t b){
 }
 
 static void oled_char2x(uint8_t page, uint8_t col, char c){
-    uint8_t idx = (c == ':') ? 10 : (uint8_t)(c - '0');
+    uint8_t idx = (c == ' ') ? 11 : (c == ':') ? 10 : (uint8_t)(c - '0');
     uint8_t top[12], bot[12];
     top[10] = top[11] = bot[10] = bot[11] = 0;   // spacing columns; avoids memset under -nostdlib
     for (uint8_t i = 0; i < 5; i++){
@@ -191,9 +191,16 @@ static void oled_char2x(uint8_t page, uint8_t col, char c){
 }
 
 /* "HH:MM:SS" centred: 8 chars x 12px = 96px, starting at column 16, pages 3-4 */
-void oled_time(uint8_t h, uint8_t m, uint8_t s){
+void oled_time(uint8_t h, uint8_t m, uint8_t s, bool hide){
     char str[8] = { '0' + h/10, '0' + h%10, ':', '0' + m/10, '0' + m%10,
                     ':', '0' + s/10, '0' + s%10 };
+     
+    if (hide){
+        for (uint8_t i = 0; i < 8; i++){
+            str[i] = ' '; 
+        }
+    }
+
     for (uint8_t i = 0; i < 8; i++)
         oled_char2x(3, 16 + 12*i, str[i]);
 }
