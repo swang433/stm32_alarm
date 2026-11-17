@@ -1,38 +1,24 @@
-# STM32 Alarm Clock
+# STM32 Alarm Clock — Bare-Metal Firmware
 
-Bare-metal alarm clock firmware written in C with direct register access — no HAL or CMSIS abstraction layer.
+A fully functional alarm clock written in C for an ARM Cortex-M0+ microcontroller, built from scratch with **direct register access** — no HAL, no CMSIS, no standard library. Every peripheral (RTC, I2C, timers/PWM, GPIO, interrupts) is configured by hand from the reference manual, and the project ships its own startup code, vector table and linker script.
 
-> **Prototyping board:** Nucleo-C071RB (STM32C071RB, Cortex-M0+). Config registers are in `config.h`.
+**Target:** STM32C071RB (Cortex-M0+) on a Nucleo-C071RB board
 
-## Features
+## Highlights
 
-- Real-time clock using the STM32 internal RTC peripheral
-- SH1106 OLED display over I2C
-- Passive piezo buzzer driven by PWM
-- Four buttons with software busy-wait debouncing
-- Finite state machine with four operating modes
-- Up to 4 alarms, with duplicate detection
+- **Bare-metal from reset:** custom assembly startup file, vector table and linker script; compiled with `-nostdlib`
+- **Custom drivers:** SH1106 OLED over hardware I2C (400 kHz), RTC on the 32.768 kHz LSE crystal, PWM buzzer on a hardware timer
+- **Interrupt-driven input:** four buttons on EXTI lines with debouncing in the ISR
+- **Finite state machine:** four modes (Clock, Set Time, Set Alarm, Ring) driven by button events and RTC time
+- **Alarm management:** up to 4 alarms, with duplicate and full-list rejection signalled by distinct error tones
+- **Efficient display updates:** redraws only the regions that changed, with blinking driven by the RTC sub-second counter
+- **Hardware debugging:** diagnosed an I2C incompatibility on a clone MCU and moved platforms (see [Engineering Challenges](#engineering-challenges))
 
-## Hardware
+## How It Works
 
-| Peripheral | Interface | Pin(s) |
-|---|---|---|
-| SH1106 OLED Display | I2C | PB6 SCL (D1), PB7 SDA (D0) |
-| Passive Piezo Buzzer | PWM | PA7 (D11) |
-| Tactile Buttons (×4) | Digital Input (pull-up) | PA0 (A0), PA1 (A1), PA4 (A2), PB3 (D9) |
+The RTC keeps time from an external crystal. The main loop reads the time, compares it against the stored alarms, and updates the OLED. Button presses raise interrupts that post an event to the state machine, which changes mode or edits the time being set. When an alarm matches, the buzzer plays a melody until it is dismissed.
 
-**Target MCU:** STM32C071RB on Nucleo-C071RB (previously STM32F103)
-
-## Button Map
-
-| MCU Pin | Arduino Header | Button | Action |
-|---|---|---|---|
-| PA0 | A0 | Up | In a set mode: one minute later (carries into the hour) |
-| PA1 | A1 | Down | In a set mode: one minute earlier |
-| PB3 | D9 | Set | In clock mode: enter set time. In a set mode: confirm and return to clock |
-| PA4 | A2 | Snooze | In clock mode: enter set alarm. While ringing: dismiss the alarm |
-
-## FSM Modes
+### State Machine
 
 | From | Event | To |
 |---|---|---|
@@ -45,66 +31,74 @@ Bare-metal alarm clock firmware written in C with direct register access — no 
 | Set Alarm | Set | Clock (alarm saved) |
 | Ring | Snooze | Clock |
 
-- **Clock**: default display, shows the current time from the RTC
-- **Set Time**: up/down change the time one minute at a time; set writes it to the RTC
-- **Set Alarm**: up/down change the alarm time; set saves it (rejects duplicates and a full list)
-- **Ring**: plays the alarm tune until snooze is pressed; each alarm rings once per matching minute
+- **Clock:** shows the current time from the RTC
+- **Set Time / Set Alarm:** Up/Down step one minute at a time (with hour carry and wraparound), and the digits blink twice a second
+- **Ring:** plays the alarm melody until Snooze is pressed. Each alarm fires once per matching minute.
 
-The time blinks twice a second in both set modes.
+## Hardware
+
+| Component | Interface | Pin(s) |
+|---|---|---|
+| SH1106 128×64 OLED | I2C1 | PB6 SCL (D1), PB7 SDA (D0) |
+| Passive piezo buzzer | TIM3_CH2 PWM | PA7 (D11) |
+| Tactile buttons ×4 | GPIO input, pull-up, EXTI | PA0 (A0), PA1 (A1), PA4 (A2), PB3 (D9) |
+
+| Button | Pin | Action |
+|---|---|---|
+| Up | PA0 | In a set mode: +1 minute |
+| Down | PA1 | In a set mode: −1 minute |
+| Set | PB3 | In Clock: enter Set Time. In a set mode: confirm and return to Clock |
+| Snooze | PA4 | In Clock: enter Set Alarm. While ringing: dismiss |
 
 ## Project Structure
 
 ```
 alarm/
-├── config.h       # Register definitions, enums and prototypes for STM32C071RB
-├── main.c         # Button setup, FSM logic and main loop
-├── irq.c          # EXTI interrupt handlers with software debounce
-├── rtc.c          # RTC on the 32.768 kHz LSE: init, set and read the time
-├── oled.c         # SH1106 display driver (I2C) and 2x digit font
-├── alarm.c        # Buzzer driver (TIM3_CH2 PWM on PA7) and melodies
-├── memcpy.c       # memcpy for struct copies, since the build uses -nostdlib
-├── startup.s      # Cortex-M0+ startup and vector table in assembly
-├── linker.ld      # Linker script for flash/RAM layout
-├── build.sh       # Builds firmware.elf and firmware.bin
-└── TODO.md        # Remaining work
+├── config.h     # Register definitions, enums and prototypes
+├── main.c       # Peripheral init, state machine and main loop
+├── irq.c        # EXTI interrupt handlers with debounce
+├── rtc.c        # RTC init, set and read (LSE clock, BCD registers)
+├── oled.c       # SH1106 driver over I2C and a 2× scaled digit font
+├── alarm.c      # PWM buzzer driver and melodies
+├── memcpy.c     # Minimal memcpy for struct copies under -nostdlib
+├── startup.s    # Cortex-M0+ startup code and vector table
+├── linker.ld    # Flash/RAM memory layout
+└── build.sh     # Build script
 ```
 
 ## Building & Flashing
 
-Requires `arm-none-eabi-gcc`, `arm-none-eabi-objcopy`, and STM32CubeProgrammer (for flashing). The startup file (`startup.s`) and linker script (`linker.ld`) are included.
+**Requirements:** `arm-none-eabi-gcc` toolchain and STM32CubeProgrammer
 
-**1. Build** compiles, links and converts to binary in one step. Run it in Git Bash (not WSL, and not `.uild.sh` from PowerShell). With no arguments it builds every `.c` file except the standalone tests `but.c` and `test.c`; pass files to build only those (`startup.s` and `linker.ld` are added automatically):
 ```bash
-./build.sh
-./build.sh but.c
-```
-
-This produces `firmware.elf` and `firmware.bin`.
-
-**2. Flash via STM32CubeProgrammer (ST-Link)** — the Nucleo-C071RB has an onboard ST-Link; no bootloader pin toggling needed.
-
-*GUI:* open STM32CubeProgrammer, select **ST-LINK** as the interface, click **Connect**, open `firmware.bin` (or `firmware.elf`) in the **Erasing & Programming** tab, set the start address to `0x08000000` for a `.bin`, and click **Start Programming**.
-
-*CLI:*
-```bash
+./build.sh                                        # builds firmware.elf and firmware.bin
 STM32_Programmer_CLI -c port=SWD -w firmware.bin 0x08000000 -v -rst
 ```
 
-`-v` verifies after writing and `-rst` resets the board so the new firmware starts running.
+The Nucleo board's onboard ST-Link handles flashing over SWD. On Windows, run `build.sh` from Git Bash.
 
-## Challenges Faced
+## Engineering Challenges
 
-### GD32F103 I2C Peripheral Incompatibility
-The target board was a GD32F103C8T6, a Chinese STM32F103-compatible clone. While the GD32 is pin and register-compatible with the STM32 for most peripherals, the hardware I2C peripheral behaves differently — the GD32's I2C state machine has timing differences that cause it to silently fail when following the standard STM32F103 register-level initialization sequence. The OLED would not be detected at address `0x3C` and no ACK was received. The fix was to abandon the hardware I2C peripheral entirely and implement bit-bang I2C on PB6/PB7 using direct GPIO toggling, which bypasses the peripheral and works identically on both chips. This was also later abandoned in favor of the STM32C071RB Nucleo Board which contains the actual STM32C071 chip that contains proper I2C peripherals.
+### I2C incompatibility on a clone MCU
+The project started on a GD32F103, a clone of the STM32F103. It is register-compatible for most peripherals, but its hardware I2C state machine behaves differently: following the standard STM32 initialization sequence, the OLED never ACKed at address `0x3C`. I worked around it by writing a bit-banged I2C driver on GPIO, which worked on the clone.
 
-### Display Refresh Speed Bottleneck
-On the GD32, the bit-bang I2C implementation ran at approximately 50kHz due to the 50-NOP `dly()` calls inserted between every SCL/SDA transition. Clearing the full display requires 1024 I2C bytes (128 columns × 8 pages), each requiring 9 clock pulses with multiple delay calls. This made a full clear + redraw take significant time, limiting how fast the display could be updated.
-
-This was resolved by moving to the Nucleo-C071RB, where the hardware I2C1 peripheral is used instead (`TIMINGR` configured for a 400kHz bus, roughly 8× the old bit rate, with the hardware handling the clock and START/STOP). To keep updates fast, the display code should still avoid full clears and only redraw the regions that changed.
+### Display throughput
+The bit-banged bus ran at roughly 50 kHz. A full screen is 1,024 bytes, so full redraws were slow. Moving to the STM32C071 let me use the real I2C peripheral at 400 kHz (about 8× faster), with the hardware generating the clock and START/STOP conditions. I also changed the drawing code to update only the regions that change, never clearing the whole screen.
 
 ## Implementation Notes
 
-- All peripherals are configured by direct memory-mapped register writes defined in `config.h`.
-- Button debounce is handled inside each EXTI ISR using a busy-wait NOP loop (`DEBOUNCE_MS = 20`, which comes out to around 170 ms of actual debouncing at 12 MHz).
-- Button events are communicated to the FSM via a `volatile` global flag (`button_event`).
-- The RTC runs from the LSE crystal; the time is read from `RTC_TR` (BCD) and blinking uses the sub-second counter `RTC_SSR`. Alarms are matched in the main loop rather than with the RTC alarm hardware.
+- All peripherals are configured through memory-mapped register definitions in `config.h`.
+- Button events reach the state machine through a single `volatile` event variable written by the ISRs.
+- Debouncing uses a calibrated busy-wait loop inside the ISR (about 170 ms in practice). That is simple and reliable for this application; a timer-based debounce is a possible improvement.
+- The RTC time is read from `RTC_TR` in BCD. Alarms are matched in software in the main loop, which supports multiple alarms without using the RTC's single hardware alarm.
+- The Cortex-M0+ has no hardware divider, so division comes from `libgcc`.
+
+## Roadmap
+
+- Real snooze (re-arm the alarm a few minutes later instead of dismissing)
+- Non-blocking alarm playback so buttons respond mid-melody
+- Delete alarms, and save them to flash so they survive power loss
+- On-screen mode labels and a cancel option in the set modes
+- Battery-backed external RTC (DS3231) to keep time while unplugged
+
+See [TODO.md](TODO.md) for the detailed task list.
